@@ -24,11 +24,13 @@
 use std::ffi::{CStr, CString};
 use std::ptr::null_mut;
 
-use gdbus_sys::{GDBusConnection, GDBusInterfaceVTable, GDBusMethodInvocation, GDBusSendMessageFlags, g_dbus_connection_register_object, g_dbus_connection_send_message_with_reply_sync, g_dbus_message_get_message_type, g_dbus_message_to_gerror};
+use gdbus_sys::{GDBusConnection, GDBusInterfaceVTable, GDBusMessage, GDBusMethodInvocation, GDBusSendMessageFlags, g_dbus_connection_register_object, g_dbus_connection_send_message_with_reply, g_dbus_connection_send_message_with_reply_finish, g_dbus_connection_send_message_with_reply_sync, g_dbus_message_get_message_type, g_dbus_message_to_gerror};
 use gdbus_sys::GDBusMessageType::G_DBUS_MESSAGE_TYPE_ERROR;
+use gio_sys::GAsyncResult;
 use glib::error::Error;
 use glib::translate::from_glib_full;
 use glib_sys::{GError, GVariant};
+use gobject_sys::GObject;
 use libc::{c_char, c_void};
 
 use message::Message;
@@ -46,6 +48,8 @@ bitflags! {
         const SEND_MESSAGE_FLAGS_PRESERVE_SERIAL = 1,
     }
 }
+
+type SendMessageCallback = Box<Box<Fn(Result<Message, Error>) + 'static>>;
 
 /// The `GDBusConnection` type is used for D-Bus connections to remote peers such as a message buses. It is a low-level API that offers a lot of flexibility. For instance, it lets you establish a connection over any transport that can by represented as an `GIOStream`.
 pub struct Connection(*mut GDBusConnection);
@@ -76,6 +80,28 @@ impl Connection {
         unsafe { g_dbus_connection_register_object(self.0, object_path.as_ptr(), interface_info.to_glib(), &vtable as *const _, Box::into_raw(callback) as *mut _, user_data_free_func, null_mut()) };
     }
 
+    /// Asynchronously sends `message` to the peer represented by `connection`.
+    /// Unless `flags` contain the `G_DBUS_SEND_MESSAGE_FLAGS_PRESERVE_SERIAL` flag, the serial number
+    /// will be assigned by `connection` and set on `message` via `g_dbus_message_set_serial()`. If
+    /// `out_serial` is not `NULL`, then the serial number used will be written to this location prior
+    /// to submitting the message to the underlying transport.
+    /// If `connection` is closed then the operation will fail with `G_IO_ERROR_CLOSED`. If `cancellable`
+    /// is canceled, the operation will fail with `G_IO_ERROR_CANCELLED`. If `message` is not
+    /// well-formed, the operation fails with `G_IO_ERROR_INVALID_ARGUMENT`.
+    /// This is an asynchronous method. When the operation is finished, `callback` will be invoked in
+    /// the thread-default main context of the thread you are calling this method from. You can
+    /// then call `g_dbus_connection_send_message_with_reply_finish()` to get the result of the
+    /// operation. See `g_dbus_connection_send_message_with_reply_sync()` for the synchronous
+    /// version.
+    /// Note that `message` must be unlocked, unless `flags` contain the
+    /// `G_DBUS_SEND_MESSAGE_FLAGS_PRESERVE_SERIAL` flag.
+    /// See this server and client for an example of how to use this low-level API to send and
+    /// receive UNIX file descriptors.
+    pub fn send_message_with_reply<F: Fn(Result<Message, Error>) + 'static>(&self, message: Message, flags: SendMessageFlags, callback: F) {
+        let callback: SendMessageCallback = Box::new(Box::new(callback));
+        unsafe { g_dbus_connection_send_message_with_reply(self.0, message.to_glib(), GDBusSendMessageFlags::from_bits_truncate(flags.bits()), -1, null_mut(), null_mut(), send_message_callback, Box::into_raw(callback) as *mut _) };
+    }
+
     /// Synchronously sends `message` to the peer represented by `connection` and blocks the calling thread until a reply is received or the timeout is reached. See `g_dbus_connection_send_message_with_reply()` for the asynchronous version of this method.
     /// Unless `flags` contain the `G_DBUS_SEND_MESSAGE_FLAGS_PRESERVE_SERIAL` flag, the serial number will be assigned by `connection` and set on `message` via `g_dbus_message_set_serial()`. If `out_serial` is not `NULL`, then the serial number used will be written to this location prior to submitting the message to the underlying transport.
     /// If `connection` is closed then the operation will fail with `G_IO_ERROR_CLOSED`. If `cancellable` is canceled, the operation will fail with `G_IO_ERROR_CANCELLED`. If `message` is not well-formed, the operation fails with `G_IO_ERROR_INVALID_ARGUMENT`.
@@ -85,18 +111,22 @@ impl Connection {
     pub fn send_message_with_reply_sync(&self, message: Message, flags: SendMessageFlags) -> Result<Message, Error> {
         let mut error = null_mut();
         let message = unsafe { g_dbus_connection_send_message_with_reply_sync(self.0, message.to_glib(), GDBusSendMessageFlags::from_bits_truncate(flags.bits()), -1, null_mut(), null_mut(), &mut error) };
-        if error.is_null() {
-            if unsafe { g_dbus_message_get_message_type(message) } == G_DBUS_MESSAGE_TYPE_ERROR {
-                unsafe { g_dbus_message_to_gerror(message, &mut error) };
-                Err(unsafe { from_glib_full(error) })
-            }
-            else {
-                Ok(Message::new(message))
-            }
-        }
-        else {
+        message_to_result(message, error)
+    }
+}
+
+fn message_to_result(message: *mut GDBusMessage, mut error: *mut GError) -> Result<Message, Error> {
+    if error.is_null() {
+        if unsafe { g_dbus_message_get_message_type(message) } == G_DBUS_MESSAGE_TYPE_ERROR {
+            unsafe { g_dbus_message_to_gerror(message, &mut error) };
             Err(unsafe { from_glib_full(error) })
         }
+        else {
+            Ok(Message::new(message))
+        }
+    }
+    else {
+        Err(unsafe { from_glib_full(error) })
     }
 }
 
@@ -114,4 +144,12 @@ unsafe extern fn handle_get_property(_connection: *mut GDBusConnection, _sender:
 unsafe extern fn handle_set_property(_connection: *mut GDBusConnection, _sender: *const c_char, _object_path: *const c_char, _interface_name: *const c_char, _property_name: *const c_char, _value: *mut GVariant, _error: *mut *mut GError, _user_data: *mut c_void) {
     // TODO
     println!("Set property");
+}
+
+unsafe extern fn send_message_callback(source_object: *mut GObject, res: *mut GAsyncResult, user_data: *mut c_void) {
+    let mut error = null_mut();
+    let message = g_dbus_connection_send_message_with_reply_finish(source_object as *mut _, res, &mut error);
+    let result = message_to_result(message, error);
+    let callback: &Box<Fn(Result<Message, Error>) + 'static> = &*(user_data as *const Box<_>);
+    callback(result);
 }

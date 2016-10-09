@@ -66,6 +66,15 @@ fn on_name_appeared(connection: &Connection, name_owner: &str) {
     let message = connection.send_message_with_reply_sync(method_call_message, SEND_MESSAGE_FLAGS_NONE).unwrap();
     let (response,): (bool,) = FromVariant::from_variant(&message.get_body());
     println!("Response: {}", response);
+
+    let num: i64 = 41;
+    let method_call_message = Message::new_method_call(name_owner, "/org/gtk/GDBus/TestObject", "org.gtk.GDBus.TestInterface", "Increment");
+    method_call_message.set_body((num,));
+    connection.send_message_with_reply(method_call_message, SEND_MESSAGE_FLAGS_NONE, |message| {
+        let message = message.as_ref().unwrap();
+        let (response,): (i64,) = FromVariant::from_variant(&message.get_body());
+        println!("Async response: {}", response);
+    });
 }
 
 fn main() {
