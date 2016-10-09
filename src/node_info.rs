@@ -42,6 +42,11 @@ impl InterfaceInfo {
 pub struct NodeInfo(*mut GDBusNodeInfo);
 
 impl NodeInfo {
+    /// Create a `NodeInfo` from a pointer.
+    pub fn new(node_info: *mut GDBusNodeInfo) -> Self {
+        NodeInfo(node_info)
+    }
+
     /// Parses `xml_data` and returns a `NodeInfo` representing the data.
     /// The introspection XML must contain exactly one top-level <node> element.
     /// Note that this routine is using a GMarkup-based parser that only accepts a subset of valid XML documents.

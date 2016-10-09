@@ -66,6 +66,13 @@ impl OwnName {
             name: name.to_string(),
         }
     }
+
+    #[doc(hidden)]
+    pub fn from_id(id: u32) -> OwnName {
+        OwnName {
+            id: id,
+        }
+    }
 }
 
 impl Drop for OwnName {
