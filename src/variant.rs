@@ -42,20 +42,110 @@ impl Variant {
     }
 }
 
+/// Trait for converting to a value from its ffi representation.
+pub trait FromFFI {
+    /// Rust representation.
+    type Input;
+
+    /// Convert the value from its ffi representation.
+    unsafe fn from_ffi(input: *mut Self::Input) -> Self;
+}
+
+impl FromFFI for String {
+    type Input = c_char;
+
+    unsafe fn from_ffi(input: *mut Self::Input) -> Self {
+        let result = CStr::from_ptr(input);
+        result.to_str().unwrap().to_string()
+    }
+}
+
+/// Trait for converting a type to its format string for a conversion from a variant.
+pub trait FromFormat {
+    /// Convert the type to its from format string.
+    fn from_format() -> &'static str;
+}
+
+impl FromFormat for String {
+    fn from_format() -> &'static str {
+        "&s"
+    }
+}
+
 /// Trait to convert a `variant` to a type.
 pub trait FromVariant: Sized {
     /// Convert the `variant` to the type.
     fn from_variant(variant: &Variant) -> Self;
 }
 
-impl FromVariant for (String,) {
+impl<P: FromFFI + FromFormat> FromVariant for (P,) {
     fn from_variant(variant: &Variant) -> Self {
-        let mut c_string: *mut c_char = null_mut();
-        let format = CString::new("(&s)").unwrap();
-        unsafe { g_variant_get(variant.to_glib(), format.as_ptr(), &mut c_string as *mut _) };
-        let result = unsafe { CStr::from_ptr(c_string) };
-        let string = result.to_str().unwrap().to_string();
-        (string,)
+        let mut ffi: *mut <P as FromFFI>::Input = null_mut();
+        let format = CString::new(format!("({})", P::from_format()).as_bytes()).unwrap();
+        unsafe { g_variant_get(variant.to_glib(), format.as_ptr(), &mut ffi as *mut _) };
+        (unsafe { P::from_ffi(ffi) },)
+    }
+}
+
+/// Trait for converting a ffi value to an argument for `g_variant_new()`.
+pub trait ToArg {
+    /// Representation required for `g_variant_new()`.
+    type Output;
+
+    /// Convert the ffi value to an argument.
+    fn to_arg(&self) -> Self::Output;
+}
+
+impl ToArg for CString {
+    type Output = *const c_char;
+
+    fn to_arg(&self) -> Self::Output {
+        self.as_ptr()
+    }
+}
+
+/// Trait for converting a value to its ffi representation.
+pub trait ToFFI
+    where Self::Output: ToArg
+{
+    /// FFI representation.
+    type Output;
+
+    /// Convert the value to its ffi representation.
+    fn to_ffi(&self) -> Self::Output;
+}
+
+impl<'a> ToFFI for &'a str {
+    type Output = CString;
+
+    fn to_ffi(&self) -> Self::Output {
+        CString::new(*self).unwrap()
+    }
+}
+
+impl ToFFI for String {
+    type Output = CString;
+
+    fn to_ffi(&self) -> Self::Output {
+        CString::new(self.as_bytes()).unwrap()
+    }
+}
+
+/// Trait for converting a type to its format string for a conversion to a variant.
+pub trait ToFormat {
+    /// Convert the type to its format string.
+    fn to_format() -> &'static str;
+}
+
+impl<'a> ToFormat for &'a str {
+    fn to_format() -> &'static str {
+        "s"
+    }
+}
+
+impl ToFormat for String {
+    fn to_format() -> &'static str {
+        "s"
     }
 }
 
@@ -65,18 +155,10 @@ pub trait ToVariant {
     fn to_variant(&self) -> Variant;
 }
 
-impl<'a> ToVariant for (&'a str,) {
+impl<P: ToFFI + ToFormat> ToVariant for (P,) {
     fn to_variant(&self) -> Variant {
-        let string = CString::new(self.0).unwrap();
-        let format = CString::new("(s)").unwrap();
-        Variant(unsafe { g_variant_new(format.as_ptr(), string.as_ptr()) })
-    }
-}
-
-impl ToVariant for (String,) {
-    fn to_variant(&self) -> Variant {
-        let string = CString::new(self.0.as_bytes()).unwrap();
-        let format = CString::new("(s)").unwrap();
-        Variant(unsafe { g_variant_new(format.as_ptr(), string.as_ptr()) })
+        let ffi = self.0.to_ffi();
+        let format = CString::new(format!("({})", P::to_format()).as_bytes()).unwrap();
+        Variant(unsafe { g_variant_new(format.as_ptr(), ffi.to_arg()) })
     }
 }
