@@ -138,18 +138,18 @@ unsafe extern "C" fn bus_acquired_handler(connection: *mut GDBusConnection, _nam
     callback(&Connection::new(connection));
 }
 
-unsafe extern "C" fn name_acquired_handler(connection: *mut GDBusConnection, _name: *const c_char, user_data: *mut c_void) {
+unsafe extern "C" fn name_acquired_handler(_connection: *mut GDBusConnection, _name: *const c_char, _user_data: *mut c_void) {
     // TODO
     println!("Name acquired");
 }
 
-unsafe extern "C" fn name_lost_handler(connection: *mut GDBusConnection, _name: *const c_char, user_data: *mut c_void) {
+unsafe extern "C" fn name_lost_handler(_connection: *mut GDBusConnection, _name: *const c_char, _user_data: *mut c_void) {
     // TODO
     println!("Name lost");
 }
 
 /// Free the user data.
-pub unsafe extern "C" fn user_data_free_func(data: *mut c_void) {
+pub unsafe extern "C" fn user_data_free_func(_data: *mut c_void) {
     // TODO
     println!("Free user data");
 }

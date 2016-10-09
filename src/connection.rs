@@ -100,18 +100,18 @@ impl Connection {
     }
 }
 
-unsafe extern fn handle_method_call(connection: *mut GDBusConnection, sender: *const c_char, object_path: *const c_char, interface_name: *const c_char, method_name: *const c_char, parameters: *mut GVariant, invocation: *mut GDBusMethodInvocation, user_data: *mut c_void) {
+unsafe extern fn handle_method_call(_connection: *mut GDBusConnection, _sender: *const c_char, _object_path: *const c_char, _interface_name: *const c_char, method_name: *const c_char, parameters: *mut GVariant, invocation: *mut GDBusMethodInvocation, user_data: *mut c_void) {
     let callback: &Box<Fn(&str, Variant, &MethodInvocation) + 'static> = &*(user_data as *const Box<_>);
     let cstring = CStr::from_ptr(method_name);
     callback(cstring.to_str().unwrap(), Variant::new(parameters), &MethodInvocation::new(invocation));
 }
 
-unsafe extern fn handle_get_property(connection: *mut GDBusConnection, sender: *const c_char, object_path: *const c_char, interface_name: *const c_char, property_name: *const c_char, error: *mut *mut GError, user_data: *mut c_void) {
+unsafe extern fn handle_get_property(_connection: *mut GDBusConnection, _sender: *const c_char, _object_path: *const c_char, _interface_name: *const c_char, _property_name: *const c_char, _error: *mut *mut GError, _user_data: *mut c_void) {
     // TODO
     println!("Get property");
 }
 
-unsafe extern fn handle_set_property(connection: *mut GDBusConnection, sender: *const c_char, object_path: *const c_char, interface_name: *const c_char, property_name: *const c_char, value: *mut GVariant, error: *mut *mut GError, user_data: *mut c_void) {
+unsafe extern fn handle_set_property(_connection: *mut GDBusConnection, _sender: *const c_char, _object_path: *const c_char, _interface_name: *const c_char, _property_name: *const c_char, _value: *mut GVariant, _error: *mut *mut GError, _user_data: *mut c_void) {
     // TODO
     println!("Set property");
 }

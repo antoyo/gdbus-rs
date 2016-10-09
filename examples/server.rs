@@ -32,10 +32,31 @@ const INTROSPECTION_XML: &'static str = "<node>
   <interface name='org.gtk.GDBus.TestInterface'>
     <annotation name='org.gtk.GDBus.Annotation' value='OnInterface'/>
     <annotation name='org.gtk.GDBus.Annotation' value='AlsoOnInterface'/>
+    <method name='DecrementIncrement'>
+      <arg type='x' name='number' direction='in'/>
+      <arg type='x' name='decrement' direction='out'/>
+      <arg type='y' name='increment' direction='out'/>
+    </method>
+    <method name='Increment'>
+      <arg type='x' name='number' direction='in'/>
+      <arg type='x' name='response' direction='out'/>
+    </method>
+    <method name='IsTrue'>
+      <arg type='b' name='boolean' direction='in'/>
+      <arg type='b' name='response' direction='out'/>
+    </method>
     <method name='HelloWorld'>
       <annotation name='org.gtk.GDBus.Annotation' value='OnMethod'/>
       <arg type='s' name='greeting' direction='in'/>
       <arg type='s' name='response' direction='out'/>
+    </method>
+    <method name='MultipleResults'>
+      <arg type='x' name='number' direction='in'/>
+      <arg type='n' name='result1' direction='out'/>
+      <arg type='q' name='result2' direction='out'/>
+      <arg type='i' name='result3' direction='out'/>
+      <arg type='u' name='result4' direction='out'/>
+      <arg type='t' name='result5' direction='out'/>
     </method>
     <method name='EmitSignal'>
       <arg type='d' name='speed_in_mph' direction='in'>
@@ -69,10 +90,32 @@ fn hello_world(greeting: &str) -> String {
 }
 
 fn handle_method_call(method_name: &str, args: Variant, invocation: &MethodInvocation) {
-    if method_name == "HelloWorld" {
-        let (greeting,): (String,) = FromVariant::from_variant(&args);
-        let response = hello_world(&greeting);
-        invocation.return_value((response,));
+    match method_name {
+        "DecrementIncrement" => {
+            let (number,): (i64,) = FromVariant::from_variant(&args);
+            let decrement = number - 1;
+            let increment = number as u8 + 1;
+            invocation.return_value((decrement, increment));
+        },
+        "HelloWorld" => {
+            let (greeting,): (String,) = FromVariant::from_variant(&args);
+            let response = hello_world(&greeting);
+            invocation.return_value((response,));
+        },
+        "Increment" => {
+            let (number,): (i64,) = FromVariant::from_variant(&args);
+            let response = number + 1;
+            invocation.return_value((response,));
+        },
+        "IsTrue" => {
+            let (boolean,): (bool,) = FromVariant::from_variant(&args);
+            invocation.return_value((boolean,));
+        },
+        "MultipleResults" => {
+            let (number,): (i64,) = FromVariant::from_variant(&args);
+            invocation.return_value((number as i16 - 2, number as u16 - 1, number as i32, number as u32 + 1, number as u64 + 2));
+        },
+        _ => unreachable!(),
     }
 }
 

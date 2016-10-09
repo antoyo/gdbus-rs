@@ -101,6 +101,6 @@ unsafe extern "C" fn name_appeared_handler(connection: *mut GDBusConnection, _na
     callback(&Connection::new(connection), &name_owner.into_string().unwrap());
 }
 
-unsafe extern "C" fn name_vanished_handler(connection: *mut GDBusConnection, _name: *const c_char, user_data: *mut c_void) {
+unsafe extern "C" fn name_vanished_handler(_connection: *mut GDBusConnection, _name: *const c_char, _user_data: *mut c_void) {
     println!("Name vanished");
 }

@@ -22,10 +22,53 @@
 //! `GVariant` — strongly typed value datatype.
 
 use std::ffi::{CStr, CString};
-use std::ptr::null_mut;
+use std::mem::zeroed;
 
 use glib_sys::{GVariant, g_variant_get, g_variant_new};
-use libc::c_char;
+use libc::{c_char, c_int, int16_t, int32_t, int64_t, uint16_t, uint32_t, uint64_t, uint8_t};
+
+/// Wrapper for boolean c type.
+pub struct CBool(c_int);
+
+macro_rules! numeric_variant {
+    ($rust_type:ty, $c_type:ty, $format:expr) => {
+        impl FromFFI for $rust_type {
+            type Input = $c_type;
+
+            unsafe fn from_ffi(input: Self::Input) -> Self {
+                input
+            }
+        }
+
+        impl FromFormat for $rust_type {
+            fn from_format() -> &'static str {
+                $format
+            }
+        }
+
+        impl ToArg for $c_type {
+            type Output = $c_type;
+
+            fn to_arg(&self) -> Self::Output {
+                *self
+            }
+        }
+
+        impl ToFFI for $rust_type {
+            type Output = $c_type;
+
+            fn to_ffi(&self) -> Self::Output {
+                *self
+            }
+        }
+
+        impl ToFormat for $rust_type {
+            fn to_format() -> &'static str {
+                $format
+            }
+        }
+    };
+}
 
 /// Strongly typed value datatype.
 pub struct Variant(*mut GVariant);
@@ -42,19 +85,63 @@ impl Variant {
     }
 }
 
+impl FromFFI for bool {
+    type Input = c_int;
+
+    unsafe fn from_ffi(input: Self::Input) -> Self {
+        input != 0
+    }
+}
+
+impl FromFormat for bool {
+    fn from_format() -> &'static str {
+        "b"
+    }
+}
+
+impl ToArg for CBool {
+    type Output = c_int;
+
+    fn to_arg(&self) -> Self::Output {
+        self.0
+    }
+}
+
+impl ToFFI for bool {
+    type Output = CBool;
+
+    fn to_ffi(&self) -> Self::Output {
+        CBool(*self as i32)
+    }
+}
+
+impl ToFormat for bool {
+    fn to_format() -> &'static str {
+        "b"
+    }
+}
+
+numeric_variant!(u8, uint8_t, "y");
+numeric_variant!(i16, int16_t, "n");
+numeric_variant!(u16, uint16_t, "q");
+numeric_variant!(i32, int32_t, "i");
+numeric_variant!(u32, uint32_t, "u");
+numeric_variant!(i64, int64_t, "x");
+numeric_variant!(u64, uint64_t, "t");
+
 /// Trait for converting to a value from its ffi representation.
 pub trait FromFFI {
     /// Rust representation.
     type Input;
 
     /// Convert the value from its ffi representation.
-    unsafe fn from_ffi(input: *mut Self::Input) -> Self;
+    unsafe fn from_ffi(input: Self::Input) -> Self;
 }
 
 impl FromFFI for String {
-    type Input = c_char;
+    type Input = *mut c_char;
 
-    unsafe fn from_ffi(input: *mut Self::Input) -> Self {
+    unsafe fn from_ffi(input: Self::Input) -> Self {
         let result = CStr::from_ptr(input);
         result.to_str().unwrap().to_string()
     }
@@ -80,10 +167,101 @@ pub trait FromVariant: Sized {
 
 impl<P: FromFFI + FromFormat> FromVariant for (P,) {
     fn from_variant(variant: &Variant) -> Self {
-        let mut ffi: *mut <P as FromFFI>::Input = null_mut();
+        let mut ffi: <P as FromFFI>::Input = unsafe { zeroed() };
         let format = CString::new(format!("({})", P::from_format()).as_bytes()).unwrap();
         unsafe { g_variant_get(variant.to_glib(), format.as_ptr(), &mut ffi as *mut _) };
         (unsafe { P::from_ffi(ffi) },)
+    }
+}
+
+impl<P: FromFFI + FromFormat, Q: FromFFI + FromFormat> FromVariant for (P, Q) {
+    fn from_variant(variant: &Variant) -> Self {
+        let mut ffi1: <P as FromFFI>::Input = unsafe { zeroed() };
+        let mut ffi2: <Q as FromFFI>::Input = unsafe { zeroed() };
+        let format = CString::new(format!("({}{})", P::from_format(), Q::from_format()).as_bytes()).unwrap();
+        unsafe { g_variant_get(variant.to_glib(), format.as_ptr(), &mut ffi1 as *mut _, &mut ffi2 as *mut _) };
+        unsafe { (P::from_ffi(ffi1), Q::from_ffi(ffi2)) }
+    }
+}
+
+impl<P: FromFFI + FromFormat, Q: FromFFI + FromFormat, R: FromFFI + FromFormat> FromVariant for (P, Q, R) {
+    fn from_variant(variant: &Variant) -> Self {
+        let mut ffi1: <P as FromFFI>::Input = unsafe { zeroed() };
+        let mut ffi2: <Q as FromFFI>::Input = unsafe { zeroed() };
+        let mut ffi3: <R as FromFFI>::Input = unsafe { zeroed() };
+        let format = CString::new(format!("({}{}{})",
+            P::from_format(),
+            Q::from_format(),
+            R::from_format()
+        ).as_bytes()).unwrap();
+        unsafe { g_variant_get(variant.to_glib(), format.as_ptr(),
+            &mut ffi1 as *mut _,
+            &mut ffi2 as *mut _,
+            &mut ffi3 as *mut _,
+        )};
+        unsafe { (
+            P::from_ffi(ffi1),
+            Q::from_ffi(ffi2),
+            R::from_ffi(ffi3),
+        )}
+    }
+}
+
+impl<P: FromFFI + FromFormat, Q: FromFFI + FromFormat, R: FromFFI + FromFormat, S: FromFFI + FromFormat> FromVariant for (P, Q, R, S) {
+    fn from_variant(variant: &Variant) -> Self {
+        let mut ffi1: <P as FromFFI>::Input = unsafe { zeroed() };
+        let mut ffi2: <Q as FromFFI>::Input = unsafe { zeroed() };
+        let mut ffi3: <R as FromFFI>::Input = unsafe { zeroed() };
+        let mut ffi4: <S as FromFFI>::Input = unsafe { zeroed() };
+        let format = CString::new(format!("({}{}{}{})",
+            P::from_format(),
+            Q::from_format(),
+            R::from_format(),
+            S::from_format(),
+        ).as_bytes()).unwrap();
+        unsafe { g_variant_get(variant.to_glib(), format.as_ptr(),
+            &mut ffi1 as *mut _,
+            &mut ffi2 as *mut _,
+            &mut ffi3 as *mut _,
+            &mut ffi4 as *mut _,
+        )};
+        unsafe { (
+            P::from_ffi(ffi1),
+            Q::from_ffi(ffi2),
+            R::from_ffi(ffi3),
+            S::from_ffi(ffi4),
+        )}
+    }
+}
+
+impl<P: FromFFI + FromFormat, Q: FromFFI + FromFormat, R: FromFFI + FromFormat, S: FromFFI + FromFormat, T: FromFFI + FromFormat> FromVariant for (P, Q, R, S, T) {
+    fn from_variant(variant: &Variant) -> Self {
+        let mut ffi1: <P as FromFFI>::Input = unsafe { zeroed() };
+        let mut ffi2: <Q as FromFFI>::Input = unsafe { zeroed() };
+        let mut ffi3: <R as FromFFI>::Input = unsafe { zeroed() };
+        let mut ffi4: <S as FromFFI>::Input = unsafe { zeroed() };
+        let mut ffi5: <T as FromFFI>::Input = unsafe { zeroed() };
+        let format = CString::new(format!("({}{}{}{}{})",
+            P::from_format(),
+            Q::from_format(),
+            R::from_format(),
+            S::from_format(),
+            T::from_format(),
+        ).as_bytes()).unwrap();
+        unsafe { g_variant_get(variant.to_glib(), format.as_ptr(),
+            &mut ffi1 as *mut _,
+            &mut ffi2 as *mut _,
+            &mut ffi3 as *mut _,
+            &mut ffi4 as *mut _,
+            &mut ffi5 as *mut _,
+        )};
+        unsafe { (
+            P::from_ffi(ffi1),
+            Q::from_ffi(ffi2),
+            R::from_ffi(ffi3),
+            S::from_ffi(ffi4),
+            T::from_ffi(ffi5),
+        )}
     }
 }
 
@@ -160,5 +338,47 @@ impl<P: ToFFI + ToFormat> ToVariant for (P,) {
         let ffi = self.0.to_ffi();
         let format = CString::new(format!("({})", P::to_format()).as_bytes()).unwrap();
         Variant(unsafe { g_variant_new(format.as_ptr(), ffi.to_arg()) })
+    }
+}
+
+impl<P: ToFFI + ToFormat, Q: ToFFI + ToFormat> ToVariant for (P, Q) {
+    fn to_variant(&self) -> Variant {
+        let ffi1 = self.0.to_ffi();
+        let ffi2 = self.1.to_ffi();
+        let format = CString::new(format!("({}{})", P::to_format(), Q::to_format()).as_bytes()).unwrap();
+        Variant(unsafe { g_variant_new(format.as_ptr(), ffi1.to_arg(), ffi2.to_arg()) })
+    }
+}
+
+impl<P: ToFFI + ToFormat, Q: ToFFI + ToFormat, R: ToFFI + ToFormat> ToVariant for (P, Q, R) {
+    fn to_variant(&self) -> Variant {
+        let ffi1 = self.0.to_ffi();
+        let ffi2 = self.1.to_ffi();
+        let ffi3 = self.2.to_ffi();
+        let format = CString::new(format!("({}{}{})", P::to_format(), Q::to_format(), R::to_format()).as_bytes()).unwrap();
+        Variant(unsafe { g_variant_new(format.as_ptr(), ffi1.to_arg(), ffi2.to_arg(), ffi3.to_arg()) })
+    }
+}
+
+impl<P: ToFFI + ToFormat, Q: ToFFI + ToFormat, R: ToFFI + ToFormat, S: ToFFI + ToFormat> ToVariant for (P, Q, R, S) {
+    fn to_variant(&self) -> Variant {
+        let ffi1 = self.0.to_ffi();
+        let ffi2 = self.1.to_ffi();
+        let ffi3 = self.2.to_ffi();
+        let ffi4 = self.3.to_ffi();
+        let format = CString::new(format!("({}{}{}{})", P::to_format(), Q::to_format(), R::to_format(), S::to_format()).as_bytes()).unwrap();
+        Variant(unsafe { g_variant_new(format.as_ptr(), ffi1.to_arg(), ffi2.to_arg(), ffi3.to_arg(), ffi4.to_arg()) })
+    }
+}
+
+impl<P: ToFFI + ToFormat, Q: ToFFI + ToFormat, R: ToFFI + ToFormat, S: ToFFI + ToFormat, T: ToFFI + ToFormat> ToVariant for (P, Q, R, S, T) {
+    fn to_variant(&self) -> Variant {
+        let ffi1 = self.0.to_ffi();
+        let ffi2 = self.1.to_ffi();
+        let ffi3 = self.2.to_ffi();
+        let ffi4 = self.3.to_ffi();
+        let ffi5 = self.4.to_ffi();
+        let format = CString::new(format!("({}{}{}{}{})", P::to_format(), Q::to_format(), R::to_format(), S::to_format(), T::to_format()).as_bytes()).unwrap();
+        Variant(unsafe { g_variant_new(format.as_ptr(), ffi1.to_arg(), ffi2.to_arg(), ffi3.to_arg(), ffi4.to_arg(), ffi5.to_arg()) })
     }
 }

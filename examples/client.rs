@@ -41,6 +41,31 @@ fn on_name_appeared(connection: &Connection, name_owner: &str) {
             println!("Failed to call method: {}", error);
         },
     }
+
+    let num: i64 = 41;
+    let method_call_message = Message::new_method_call(name_owner, "/org/gtk/GDBus/TestObject", "org.gtk.GDBus.TestInterface", "Increment");
+    method_call_message.set_body((num,));
+    let message = connection.send_message_with_reply_sync(method_call_message, SEND_MESSAGE_FLAGS_NONE).unwrap();
+    let (response,): (i64,) = FromVariant::from_variant(&message.get_body());
+    println!("Response: {}", response);
+
+    let method_call_message = Message::new_method_call(name_owner, "/org/gtk/GDBus/TestObject", "org.gtk.GDBus.TestInterface", "DecrementIncrement");
+    method_call_message.set_body((num,));
+    let message = connection.send_message_with_reply_sync(method_call_message, SEND_MESSAGE_FLAGS_NONE).unwrap();
+    let (decrement, increment): (i64, u8) = FromVariant::from_variant(&message.get_body());
+    println!("Response: ({}, {})", decrement, increment);
+
+    let method_call_message = Message::new_method_call(name_owner, "/org/gtk/GDBus/TestObject", "org.gtk.GDBus.TestInterface", "MultipleResults");
+    method_call_message.set_body((num,));
+    let message = connection.send_message_with_reply_sync(method_call_message, SEND_MESSAGE_FLAGS_NONE).unwrap();
+    let result: (i16, u16, i32, u32, u64) = FromVariant::from_variant(&message.get_body());
+    println!("Response: {:?}", result);
+
+    let method_call_message = Message::new_method_call(name_owner, "/org/gtk/GDBus/TestObject", "org.gtk.GDBus.TestInterface", "IsTrue");
+    method_call_message.set_body((true,));
+    let message = connection.send_message_with_reply_sync(method_call_message, SEND_MESSAGE_FLAGS_NONE).unwrap();
+    let (response,): (bool,) = FromVariant::from_variant(&message.get_body());
+    println!("Response: {}", response);
 }
 
 fn main() {
