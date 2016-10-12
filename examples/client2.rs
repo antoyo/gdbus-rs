@@ -29,6 +29,7 @@ dbus_interface!(
 #[dbus("org.gtk.GDBus.TestInterface")]
 interface TestClass {
     fn get_number() -> i64;
+    fn get_number_plus_x(x: i64) -> i64;
 }
 );
 
@@ -37,6 +38,7 @@ fn main() {
 
     let test_object = TestClass::new("org.gtk.GDBus.TestServer", "/org/gtk/GDBus/TestObject");
     println!("get_number(): {}", test_object.get_number().unwrap());
+    println!("get_number_plus_x(10): {}", test_object.get_number_plus_x(10).unwrap());
 
     gtk::main();
 }

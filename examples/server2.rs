@@ -27,14 +27,13 @@ extern crate gio_sys;
 extern crate glib_sys;
 extern crate gtk;
 
-use gdbus::method_invocation::MethodInvocation;
-use gdbus::node_info::NodeInfo;
-use gdbus::own_name::{OwnName, Type, NAME_OWNER_FLAGS_NONE};
-use gdbus::variant::Variant;
-
 dbus_class!("org.gtk.GDBus.TestInterface", class TestClass (number: i64) {
     fn get_number(&this) -> i64 {
         this.number
+    }
+
+    fn get_number_plus_x(&this, x: i64) -> i64 {
+        this.number + x
     }
 });
 

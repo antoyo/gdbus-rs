@@ -20,7 +20,7 @@
  */
 
 /*
- * TODO: fix to allow ommiting -> () in dbus_clas!() macro.
+ * TODO: fix to allow ommiting -> () in dbus_class!() macro.
  */
 
 //! High-level D-Bus Support.

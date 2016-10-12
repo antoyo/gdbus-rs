@@ -138,45 +138,93 @@ macro_rules! dbus_interface {
 macro_rules! dbus_functions {
     ($_self:expr, $method_name:expr, $args:expr, $invocation:expr,) => {
     };
-    ($_self:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident ($(&$this:ident)*) -> () $block:block $($rest:tt)*) => {
+    ($_self:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident (&$this:ident) -> () $block:block $($rest:tt)*) => {
         if $method_name == stringify!($func_name) {
+            let $this = $_self;
             let _result = $block;
         }
         dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
     };
-    ($_self:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident ($(&$this:ident)*) -> ($($return_type:ty),*) $block:block $($rest:tt)*) => {
+    ($_self:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident (&$this:ident) -> ($($return_type:ty),*) $block:block $($rest:tt)*) => {
         if $method_name == stringify!($func_name) {
+            let $this = $_self;
             let result: ($($return_type),*) = $block;
             $invocation.return_value(result);
         }
         dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
     };
-    ($_self:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident ($(&$this:ident)*) -> $return_type:ty $block:block $($rest:tt)*) => {
+    ($_self:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident (&$this:ident) -> $return_type:ty $block:block $($rest:tt)*) => {
         if $method_name == stringify!($func_name) {
-            $(let $this = $_self;)*
+            let $this = $_self;
             let result: $return_type = $block;
             $invocation.return_value((result,));
         }
         dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
     };
-    ($_self:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident ($(&this,)* $($arg:ident : $arg_type:ty),*) -> () $block:block $($rest:tt)*) => {
+    ($_self:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident (&$this:ident, $($arg:ident : $arg_type:ty),*) -> () $block:block $($rest:tt)*) => {
         if $method_name == stringify!($func_name) {
-            let ($($arg,)*): ($($arg_type,)*) = FromVariant::from_variant(&$args);
+            let $this = $_self;
+            let ($($arg,)*): ($($arg_type,)*) = ::gdbus::variant::FromVariant::from_variant(&$args);
             let _result = $block;
         }
         dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
     };
-    ($_self:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident ($(&this,)* $($arg:ident : $arg_type:ty),*) -> ($($return_type:ty),*) $block:block $($rest:tt)*) => {
+    ($_self:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident (&$this:ident, $($arg:ident : $arg_type:ty),*) -> ($($return_type:ty),*) $block:block $($rest:tt)*) => {
         if $method_name == stringify!($func_name) {
-            let ($($arg,)*): ($($arg_type,)*) = FromVariant::from_variant(&$args);
+            let $this = $_self;
+            let ($($arg,)*): ($($arg_type,)*) = ::gdbus::variant::FromVariant::from_variant(&$args);
             let result: ($($return_type),*) = $block;
             $invocation.return_value(result);
         }
         dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
     };
-    ($_self:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident ($(&this,)* $($arg:ident : $arg_type:ty),*) -> $return_type:ty $block:block $($rest:tt)*) => {
+    ($_self:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident (&$this:ident, $($arg:ident : $arg_type:ty),*) -> $return_type:ty $block:block $($rest:tt)*) => {
         if $method_name == stringify!($func_name) {
-            let ($($arg,)*): ($($arg_type,)*) = FromVariant::from_variant(&$args);
+            let $this = $_self;
+            let ($($arg,)*): ($($arg_type,)*) = ::gdbus::variant::FromVariant::from_variant(&$args);
+            let result: $return_type = $block;
+            $invocation.return_value((result,));
+        }
+        dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
+    };
+    ($_self:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident () -> () $block:block $($rest:tt)*) => {
+        if $method_name == stringify!($func_name) {
+            let _result = $block;
+        }
+        dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
+    };
+    ($_self:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident () -> ($($return_type:ty),*) $block:block $($rest:tt)*) => {
+        if $method_name == stringify!($func_name) {
+            let result: ($($return_type),*) = $block;
+            $invocation.return_value(result);
+        }
+        dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
+    };
+    ($_self:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident () -> $return_type:ty $block:block $($rest:tt)*) => {
+        if $method_name == stringify!($func_name) {
+            let result: $return_type = $block;
+            $invocation.return_value((result,));
+        }
+        dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
+    };
+    ($_self:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident ($($arg:ident : $arg_type:ty),*) -> () $block:block $($rest:tt)*) => {
+        if $method_name == stringify!($func_name) {
+            let ($($arg,)*): ($($arg_type,)*) = ::gdbus::variant::FromVariant::from_variant(&$args);
+            let _result = $block;
+        }
+        dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
+    };
+    ($_self:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident ($($arg:ident : $arg_type:ty),*) -> ($($return_type:ty),*) $block:block $($rest:tt)*) => {
+        if $method_name == stringify!($func_name) {
+            let ($($arg,)*): ($($arg_type,)*) = ::gdbus::variant::FromVariant::from_variant(&$args);
+            let result: ($($return_type),*) = $block;
+            $invocation.return_value(result);
+        }
+        dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
+    };
+    ($_self:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident ($($arg:ident : $arg_type:ty),*) -> $return_type:ty $block:block $($rest:tt)*) => {
+        if $method_name == stringify!($func_name) {
+            let ($($arg,)*): ($($arg_type,)*) = ::gdbus::variant::FromVariant::from_variant(&$args);
             let result: $return_type = $block;
             $invocation.return_value((result,));
         }
@@ -202,7 +250,7 @@ macro_rules! dbus_arg_signature {
 macro_rules! dbus_methods {
     () => {
     };
-    (fn $func_name:ident (&this $(,$arg:ident : $($arg_type:tt)*)*) -> ($($return_type:tt),*) $block:block $($rest:tt)*) => {
+    (fn $func_name:ident (&$this:ident $(,$arg:ident : $($arg_type:tt)*)*) -> ($($return_type:tt),*) $block:block $($rest:tt)*) => {
         const $func_name: *mut ::gio_sys::GDBusMethodInfo = {
             $(
             const $arg: ::gio_sys::GDBusArgInfo = ::gio_sys::GDBusArgInfo {
@@ -237,7 +285,7 @@ macro_rules! dbus_methods {
 
         dbus_methods!($($rest)*);
     };
-    (fn $func_name:ident (&this $(,$arg:ident : $($arg_type:tt)*)*) -> $return_type:tt $block:block $($rest:tt)*) => {
+    (fn $func_name:ident (&$this:ident $(,$arg:ident : $($arg_type:tt)*)*) -> $return_type:tt $block:block $($rest:tt)*) => {
         const $func_name: *mut ::gio_sys::GDBusMethodInfo = {
             $(
             const $arg: ::gio_sys::GDBusArgInfo = ::gio_sys::GDBusArgInfo {
@@ -270,7 +318,7 @@ macro_rules! dbus_methods {
 
         dbus_methods!($($rest)*);
     };
-    (fn $func_name:ident (&this $(,$arg:ident : $($arg_type:tt)*)*) $block:block $($rest:tt)*) => {
+    (fn $func_name:ident (&$this:ident $(,$arg:ident : $($arg_type:tt)*)*) $block:block $($rest:tt)*) => {
         const $func_name: *mut ::gio_sys::GDBusMethodInfo = {
             $(
             const $arg: ::gio_sys::GDBusArgInfo = ::gio_sys::GDBusArgInfo {
@@ -427,19 +475,19 @@ macro_rules! dbus_class {
     ($interface_name:expr, class $class_name:ident { $($functions:tt)+ }) => {
         #[derive(Clone)]
         pub struct $class_name {
-            dbus_name: String,
-            own_name: OwnName,
+            __inner_gdbus_dbus_name: String,
+            __inner_gdbus_own_name: ::gdbus::own_name::OwnName,
         }
 
         impl $class_name {
             pub fn new(dbus_name: &str) -> Self {
                 $class_name {
-                    dbus_name: dbus_name.to_string(),
-                    own_name: OwnName::from_id(0),
+                    __inner_gdbus_dbus_name: dbus_name.to_string(),
+                    __inner_gdbus_own_name: ::gdbus::own_name::OwnName::from_id(0),
                 }
             }
 
-            fn handle_method_call(&self, method_name: &str, _args: Variant, invocation: &MethodInvocation) {
+            fn handle_method_call(&self, method_name: &str, _args: ::gdbus::variant::Variant, invocation: &::gdbus::method_invocation::MethodInvocation) {
                 dbus_functions!(self, method_name, _args, invocation, $($functions)+);
             }
 
@@ -468,9 +516,9 @@ macro_rules! dbus_class {
 
                 let bus_name = bus_name.to_string();
                 let this = self.clone();
-                let old = ::std::mem::replace(&mut self.own_name, OwnName::new(Type::Session, &self.dbus_name, NAME_OWNER_FLAGS_NONE)
+                let old = ::std::mem::replace(&mut self.__inner_gdbus_own_name, ::gdbus::own_name::OwnName::new(::gdbus::own_name::Type::Session, &self.__inner_gdbus_dbus_name, ::gdbus::own_name::NAME_OWNER_FLAGS_NONE)
                     .connect_bus_acquired(move |connection| {
-                        let introspection_data = NodeInfo::new(&mut NODE);
+                        let introspection_data = ::gdbus::node_info::NodeInfo::new(&mut NODE);
                         let this = this.clone();
                         connection.register_object(&bus_name, introspection_data.interface(0), move |method_name, args, invocation| this.handle_method_call(method_name, args, invocation))
                     })
@@ -483,21 +531,21 @@ macro_rules! dbus_class {
     ($interface_name:expr, class $class_name:ident ($($variables:ident : $variable_types:ty),+) { $($functions:tt)+ }) => {
         #[derive(Clone)]
         pub struct $class_name {
-            dbus_name: String,
-            own_name: OwnName,
+            __inner_gdbus_dbus_name: String,
+            __inner_gdbus_own_name: ::gdbus::own_name::OwnName,
             $($variables : $variable_types,)*
         }
 
         impl $class_name {
             pub fn new(dbus_name: &str, $($variables: $variable_types),*) -> Self {
                 $class_name {
-                    dbus_name: dbus_name.to_string(),
-                    own_name: OwnName::from_id(0),
+                    __inner_gdbus_dbus_name: dbus_name.to_string(),
+                    __inner_gdbus_own_name: ::gdbus::own_name::OwnName::from_id(0),
                     $($variables : $variables,)*
                 }
             }
 
-            fn handle_method_call(&self, method_name: &str, _args: Variant, invocation: &MethodInvocation) {
+            fn handle_method_call(&self, method_name: &str, _args: ::gdbus::variant::Variant, invocation: &::gdbus::method_invocation::MethodInvocation) {
                 dbus_functions!(self, method_name, _args, invocation, $($functions)+);
             }
 
@@ -526,9 +574,9 @@ macro_rules! dbus_class {
 
                 let bus_name = bus_name.to_string();
                 let this = self.clone();
-                let old = ::std::mem::replace(&mut self.own_name, OwnName::new(Type::Session, &self.dbus_name, NAME_OWNER_FLAGS_NONE)
+                let old = ::std::mem::replace(&mut self.__inner_gdbus_own_name, ::gdbus::own_name::OwnName::new(::gdbus::own_name::Type::Session, &self.__inner_gdbus_dbus_name, ::gdbus::own_name::NAME_OWNER_FLAGS_NONE)
                     .connect_bus_acquired(move |connection| {
-                        let introspection_data = NodeInfo::new(&mut NODE);
+                        let introspection_data = ::gdbus::node_info::NodeInfo::new(&mut NODE);
                         let this = this.clone();
                         connection.register_object(&bus_name, introspection_data.interface(0), move |method_name, args, invocation| this.handle_method_call(method_name, args, invocation))
                     })

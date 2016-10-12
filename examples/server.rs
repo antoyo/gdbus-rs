@@ -27,11 +27,6 @@ extern crate gio_sys;
 extern crate glib_sys;
 extern crate gtk;
 
-use gdbus::method_invocation::MethodInvocation;
-use gdbus::node_info::NodeInfo;
-use gdbus::own_name::{OwnName, Type, NAME_OWNER_FLAGS_NONE};
-use gdbus::variant::{FromVariant, Variant};
-
 dbus_class!("org.gtk.GDBus.TestInterface", class TestClass {
     fn decrement_increment(number: i64) -> (i64, u8) {
         (number - 1, number as u8 + 1)
