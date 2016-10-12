@@ -19,121 +19,50 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#![allow(non_upper_case_globals)]
+
+#[macro_use]
 extern crate gdbus;
+extern crate gio_sys;
+extern crate glib_sys;
 extern crate gtk;
 
-use gdbus::connection::Connection;
 use gdbus::method_invocation::MethodInvocation;
 use gdbus::node_info::NodeInfo;
 use gdbus::own_name::{OwnName, Type, NAME_OWNER_FLAGS_NONE};
 use gdbus::variant::{FromVariant, Variant};
 
-const INTROSPECTION_XML: &'static str = "<node>
-  <interface name='org.gtk.GDBus.TestInterface'>
-    <annotation name='org.gtk.GDBus.Annotation' value='OnInterface'/>
-    <annotation name='org.gtk.GDBus.Annotation' value='AlsoOnInterface'/>
-    <method name='DecrementIncrement'>
-      <arg type='x' name='number' direction='in'/>
-      <arg type='x' name='decrement' direction='out'/>
-      <arg type='y' name='increment' direction='out'/>
-    </method>
-    <method name='Increment'>
-      <arg type='x' name='number' direction='in'/>
-      <arg type='x' name='response' direction='out'/>
-    </method>
-    <method name='IsTrue'>
-      <arg type='b' name='boolean' direction='in'/>
-      <arg type='b' name='response' direction='out'/>
-    </method>
-    <method name='HelloWorld'>
-      <annotation name='org.gtk.GDBus.Annotation' value='OnMethod'/>
-      <arg type='s' name='greeting' direction='in'/>
-      <arg type='s' name='response' direction='out'/>
-    </method>
-    <method name='MultipleResults'>
-      <arg type='x' name='number' direction='in'/>
-      <arg type='n' name='result1' direction='out'/>
-      <arg type='q' name='result2' direction='out'/>
-      <arg type='i' name='result3' direction='out'/>
-      <arg type='u' name='result4' direction='out'/>
-      <arg type='t' name='result5' direction='out'/>
-    </method>
-    <method name='EmitSignal'>
-      <arg type='d' name='speed_in_mph' direction='in'>
-        <annotation name='org.gtk.GDBus.Annotation' value='OnArg'/>
-      </arg>
-    </method>
-    <method name='GimmeStdout'/>
-    <signal name='VelocityChanged'>
-      <annotation name='org.gtk.GDBus.Annotation' value='Onsignal'/>
-      <arg type='d' name='speed_in_mph'/>
-      <arg type='s' name='speed_as_string'>
-        <annotation name='org.gtk.GDBus.Annotation' value='OnArg_NonFirst'/>
-      </arg>
-    </signal>
-    <property type='s' name='FluxCapicitorName' access='read'>
-      <annotation name='org.gtk.GDBus.Annotation' value='OnProperty'>
-        <annotation name='org.gtk.GDBus.Annotation' value='OnAnnotation_YesThisIsCrazy'/>
-      </annotation>
-    </property>
-    <property type='s' name='Title' access='readwrite'/>
-    <property type='s' name='ReadingAlwaysThrowsError' access='read'/>
-    <property type='s' name='WritingAlwaysThrowsError' access='readwrite'/>
-    <property type='s' name='OnlyWritable' access='write'/>
-    <property type='s' name='Foo' access='read'/>
-    <property type='s' name='Bar' access='read'/>
-  </interface>
-</node>";
-
-fn hello_world(greeting: &str) -> String {
-    format!("You greeted me with '{}'. Thanks!", greeting)
-}
-
-fn handle_method_call(method_name: &str, args: Variant, invocation: &MethodInvocation) {
-    match method_name {
-        "DecrementIncrement" => {
-            let (number,): (i64,) = FromVariant::from_variant(&args);
-            let decrement = number - 1;
-            let increment = number as u8 + 1;
-            invocation.return_value((decrement, increment));
-        },
-        "HelloWorld" => {
-            let (greeting,): (String,) = FromVariant::from_variant(&args);
-            let response = hello_world(&greeting);
-            invocation.return_value((response,));
-        },
-        "Increment" => {
-            let (number,): (i64,) = FromVariant::from_variant(&args);
-            let response = number + 1;
-            invocation.return_value((response,));
-        },
-        "IsTrue" => {
-            let (boolean,): (bool,) = FromVariant::from_variant(&args);
-            invocation.return_value((boolean,));
-        },
-        "MultipleResults" => {
-            let (number,): (i64,) = FromVariant::from_variant(&args);
-            invocation.return_value((number as i16 - 2, number as u16 - 1, number as i32, number as u32 + 1, number as u64 + 2));
-        },
-        _ => unreachable!(),
+dbus_class!("org.gtk.GDBus.TestInterface", class TestClass {
+    fn decrement_increment(number: i64) -> (i64, u8) {
+        (number - 1, number as u8 + 1)
     }
-}
 
-fn on_bus_acquired(connection: &Connection) {
-    match NodeInfo::new_for_xml(INTROSPECTION_XML) {
-        Ok(introspection_data) => {
-            connection.register_object("/org/gtk/GDBus/TestObject", introspection_data.interface(0), handle_method_call)
-        },
-        Err(error) => println!("{}", error),
+    fn hello_world(greeting: String) -> String {
+        format!("You greeted me with '{}'. Thanks!", greeting)
     }
-}
+
+    fn increment(number: i64) -> i64 {
+        number + 1
+    }
+
+    fn is_true(boolean: bool) -> bool {
+        boolean
+    }
+
+    fn log(message: String) -> () {
+        println!("LOG: {}", message);
+    }
+
+    fn multiple_results(number: i64) -> (i16, u16, i32, u32, u64) {
+        (number as i16 - 2, number as u16 - 1, number as i32, number as u32 + 1, number as u64 + 2)
+    }
+});
 
 fn main() {
     gtk::init().unwrap();
 
-    let _own_name = OwnName::new(Type::Session, "org.gtk.GDBus.TestServer", NAME_OWNER_FLAGS_NONE)
-        .connect_bus_acquired(on_bus_acquired)
-        .build();
+    let mut test_object = TestClass::new("org.gtk.GDBus.TestServer");
+    test_object.run("/org/gtk/GDBus/TestObject");
 
     gtk::main();
 }

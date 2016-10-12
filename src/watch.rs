@@ -23,12 +23,12 @@
 
 use std::ffi::CString;
 
-use gdbus_sys::{GBusNameWatcherFlags, GDBusConnection, g_bus_unwatch_name, g_bus_watch_name};
+use gio_sys::{GBusNameWatcherFlags, GDBusConnection, g_bus_unwatch_name, g_bus_watch_name};
 use glib::translate::ToGlib;
 use libc::{c_char, c_void};
 
 use connection::Connection;
-use own_name::{Type, user_data_free_func};
+use own_name::Type;
 
 bitflags! {
     /// Flags used in `watch_name()`.
@@ -80,8 +80,8 @@ impl WatchBuilder {
     pub fn build(self) -> Watch {
         let name = CString::new(self.name).unwrap();
         let callback: Box<Box<Fn(&Connection, &str) + 'static>> = Box::new(self.name_appeared_callback.unwrap());
-        let id = unsafe { g_bus_watch_name(self.bus_type.to_glib(), name.as_ptr(), GBusNameWatcherFlags::from_bits_truncate(self.flags.bits()), name_appeared_handler, name_vanished_handler,
-            Box::into_raw(callback) as *mut _, user_data_free_func
+        let id = unsafe { g_bus_watch_name(self.bus_type.to_glib(), name.as_ptr(), GBusNameWatcherFlags::from_bits_truncate(self.flags.bits()), Some(name_appeared_handler), Some(name_vanished_handler),
+            Box::into_raw(callback) as *mut _, None
         )};
         Watch {
             id: id,

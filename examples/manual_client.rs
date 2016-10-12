@@ -29,7 +29,7 @@ use gdbus::variant::FromVariant;
 use gdbus::watch::{Watch, NAME_WATCHER_FLAGS_NONE};
 
 fn on_name_appeared(connection: &Connection, name_owner: &str) {
-    let method_call_message = Message::new_method_call(name_owner, "/org/gtk/GDBus/TestObject", "org.gtk.GDBus.TestInterface", "DecrementIncrement");
+    let method_call_message = Message::new_method_call(name_owner, "/org/gtk/GDBus/TestObject", "org.gtk.GDBus.TestInterface", "decrement_increment");
     method_call_message.set_body((41i64,));
     match connection.send_message_with_reply_sync(method_call_message, SEND_MESSAGE_FLAGS_NONE) {
         Ok(message) => {

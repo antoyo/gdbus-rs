@@ -19,29 +19,37 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/*
- * TODO: support server class with attributes.
- * TODO: fix to allow ommiting -> () in dbus_clas!() macro.
- * TODO: fix to allow &str type in server method argument.
- */
-
-//! High-level D-Bus Support.
-
-#![warn(missing_docs)]
-
 #[macro_use]
-extern crate bitflags;
+extern crate gdbus;
 extern crate gio_sys;
 extern crate glib;
-extern crate glib_sys;
-extern crate gobject_sys;
-extern crate libc;
+extern crate gtk;
 
-pub mod connection;
-pub mod message;
-pub mod macros;
-pub mod method_invocation;
-pub mod node_info;
-pub mod own_name;
-pub mod variant;
-pub mod watch;
+dbus_interface!(
+#[dbus("org.gtk.GDBus.TestInterface")]
+interface TestClass {
+    fn decrement_increment(number: i64) -> (i64, u8);
+    fn hello_world(greeting: &str) -> String;
+    fn increment(number: i64) -> i64;
+    fn is_true(boolean: bool) -> bool;
+    fn log(message: &str);
+    fn multiple_results(number: i64) -> (i16, u16, i32, u32, u64);
+}
+);
+
+fn main() {
+    gtk::init().unwrap();
+
+    let test_object = TestClass::new("org.gtk.GDBus.TestServer", "/org/gtk/GDBus/TestObject");
+    if let Err(error) = test_object.is_true(true) {
+        println!("Error: {}", error);
+    }
+    println!("decrement_increment(41): {:?}", test_object.decrement_increment(41).unwrap());
+    println!("hello_world(\"Me\"): {}", test_object.hello_world("Me").unwrap());
+    println!("is_true(true): {}", test_object.is_true(true).unwrap());
+    println!("increment(41): {}", test_object.increment(41).unwrap());
+    println!("multiple_results(41): {:?}", test_object.multiple_results(41).unwrap());
+    test_object.log("Test Log Message").ok();
+
+    gtk::main();
+}

@@ -5,14 +5,24 @@ authors = ["Antoni Boucher <bouanto@zoho.com>"]
 
 [dependencies]
 bitflags = "^0.7"
-gio-sys = "^0.3"
-glib = "^0.1"
-glib-sys = "^0.3"
-gobject-sys = "^0.3"
 libc = "^0.2"
 
-[dependencies.gdbus-sys]
-path = "../gdbus-sys"
+[dependencies.glib]
+git = "https://github.com/gtk-rs/glib"
+version = "0.1.0"
 
-[dev-dependencies]
-gtk = "^0.1"
+[dependencies.gio-sys]
+git = "https://github.com/gtk-rs/sys"
+version = "0.3.1"
+
+[dependencies.glib-sys]
+git = "https://github.com/gtk-rs/sys"
+version = "0.3.1"
+
+[dependencies.gobject-sys]
+git = "https://github.com/gtk-rs/sys"
+version = "0.3.1"
+
+[dev-dependencies.gtk]
+git = "https://github.com/gtk-rs/gtk"
+version = "0.1.0"

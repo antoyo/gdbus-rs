@@ -23,7 +23,7 @@
 
 use std::ffi::CString;
 
-use gdbus_sys::{GDBusMessage, g_dbus_message_get_body, g_dbus_message_new_method_call, g_dbus_message_set_body};
+use gio_sys::{GDBusMessage, g_dbus_message_get_body, g_dbus_message_new_method_call, g_dbus_message_set_body};
 
 use variant::{ToVariant, Variant};
 

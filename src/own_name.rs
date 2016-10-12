@@ -23,8 +23,7 @@
 
 use std::ffi::CString;
 
-use gdbus_sys::{GBusNameOwnerFlags, GBusType, GDBusConnection, g_bus_own_name, g_bus_unown_name};
-use gdbus_sys::GBusType::{G_BUS_TYPE_STARTER, G_BUS_TYPE_NONE, G_BUS_TYPE_SYSTEM, G_BUS_TYPE_SESSION};
+use gio_sys::{GBusNameOwnerFlags, GBusType, GDBusConnection, g_bus_own_name, g_bus_unown_name, G_BUS_TYPE_STARTER, G_BUS_TYPE_NONE, G_BUS_TYPE_SYSTEM, G_BUS_TYPE_SESSION};
 use glib::translate::ToGlib;
 use libc::{c_char, c_void};
 
@@ -97,9 +96,9 @@ impl OwnNameBuilder {
                 let name = CString::new(self.name).unwrap();
                 let callback: Box<Box<Fn(&Connection) + 'static>> = Box::new(self.bus_acquired_callback.unwrap());
                 g_bus_own_name(self.bus_type.to_glib(), name.as_ptr(),
-                    GBusNameOwnerFlags::from_bits_truncate(self.flags.bits()), bus_acquired_handler,
-                    name_acquired_handler, name_lost_handler,
-                    Box::into_raw(callback) as *mut _, user_data_free_func
+                    GBusNameOwnerFlags::from_bits_truncate(self.flags.bits()), Some(bus_acquired_handler),
+                    Some(name_acquired_handler), Some(name_lost_handler),
+                    Box::into_raw(callback) as *mut _, None
                 )
             };
         OwnName {
@@ -153,10 +152,4 @@ unsafe extern "C" fn name_acquired_handler(_connection: *mut GDBusConnection, _n
 unsafe extern "C" fn name_lost_handler(_connection: *mut GDBusConnection, _name: *const c_char, _user_data: *mut c_void) {
     // TODO
     println!("Name lost");
-}
-
-/// Free the user data.
-pub unsafe extern "C" fn user_data_free_func(_data: *mut c_void) {
-    // TODO
-    println!("Free user data");
 }

@@ -19,8 +19,9 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#[macro_use]
 extern crate gdbus;
-extern crate gdbus_sys;
+extern crate gio_sys;
 extern crate glib_sys;
 extern crate gtk;
 extern crate libc;
@@ -33,7 +34,7 @@ use gdbus::variant::{FromVariant, Variant};
 
 fn handle_method_call(method_name: &str, args: Variant, invocation: &MethodInvocation) {
     match method_name {
-        "DecrementIncrement" => {
+        "decrement_increment" => {
             let (number,): (i64,) = FromVariant::from_variant(&args);
             let decrement = number - 1;
             let increment = number as u8 + 1;
@@ -43,55 +44,55 @@ fn handle_method_call(method_name: &str, args: Variant, invocation: &MethodInvoc
     }
 }
 
-const IN_ARG_GREETING: ::gdbus_sys::GDBusArgInfo = ::gdbus_sys::GDBusArgInfo {
-    ref_count: -1,
-    name: b"number\0" as *const _ as *const _,
-    signature: b"x\0" as *const _ as *const _,
+const IN_ARG_GREETING: ::gio_sys::GDBusArgInfo = ::gio_sys::GDBusArgInfo {
+    ref_count: ::glib_sys::Volatile(-1),
+    name: c_str!("number"),
+    signature: c_str!("x"),
     annotations: 0 as *mut _,
 };
 
-const IN_ARGS: [*const ::gdbus_sys::GDBusArgInfo; 2] = [&IN_ARG_GREETING, 0 as *const _];
+const IN_ARGS: [*const ::gio_sys::GDBusArgInfo; 2] = [&IN_ARG_GREETING, 0 as *const _];
 
-const OUT_ARG_DECREMENT: ::gdbus_sys::GDBusArgInfo = ::gdbus_sys::GDBusArgInfo {
-    ref_count: -1,
-    name: b"decrement\0" as *const _ as *const _,
-    signature: b"x\0" as *const _ as *const _,
+const OUT_ARG_DECREMENT: ::gio_sys::GDBusArgInfo = ::gio_sys::GDBusArgInfo {
+    ref_count: ::glib_sys::Volatile(-1),
+    name: c_str!("decrement"),
+    signature: c_str!("x"),
     annotations: 0 as *mut _,
 };
 
-const OUT_ARG_INCREMENT: ::gdbus_sys::GDBusArgInfo = ::gdbus_sys::GDBusArgInfo {
-    ref_count: -1,
-    name: b"increment\0" as *const _ as *const _,
-    signature: b"y\0" as *const _ as *const _,
+const OUT_ARG_INCREMENT: ::gio_sys::GDBusArgInfo = ::gio_sys::GDBusArgInfo {
+    ref_count: ::glib_sys::Volatile(-1),
+    name: c_str!("increment"),
+    signature: c_str!("y"),
     annotations: 0 as *mut _,
 };
 
-const OUT_ARGS: [*const ::gdbus_sys::GDBusArgInfo; 3] = [&OUT_ARG_DECREMENT, &OUT_ARG_INCREMENT, 0 as *const _];
+const OUT_ARGS: [*const ::gio_sys::GDBusArgInfo; 3] = [&OUT_ARG_DECREMENT, &OUT_ARG_INCREMENT, 0 as *const _];
 
-const METHOD_DECREMENT_INCREMENT: ::gdbus_sys::GDBusMethodInfo = ::gdbus_sys::GDBusMethodInfo {
-    ref_count: -1,
-    name: b"DecrementIncrement\0" as *const _ as *const _,
+const METHOD_DECREMENT_INCREMENT: ::gio_sys::GDBusMethodInfo = ::gio_sys::GDBusMethodInfo {
+    ref_count: ::glib_sys::Volatile(-1),
+    name: c_str!("decrement_increment"),
     in_args: &IN_ARGS as *const _ as *mut _,
     out_args: &OUT_ARGS as *const _ as *mut _,
     annotations: 0 as *mut _,
 };
 
-const METHODS: [*const ::gdbus_sys::GDBusMethodInfo; 2] = [&METHOD_DECREMENT_INCREMENT, 0 as *const _];
+const METHODS: [*const ::gio_sys::GDBusMethodInfo; 2] = [&METHOD_DECREMENT_INCREMENT, 0 as *const _];
 
-const INTERFACE: ::gdbus_sys::GDBusInterfaceInfo = ::gdbus_sys::GDBusInterfaceInfo {
-    ref_count: -1,
-    name: b"org.gtk.GDBus.TestInterface\0" as *const _ as *const _,
+const INTERFACE: ::gio_sys::GDBusInterfaceInfo = ::gio_sys::GDBusInterfaceInfo {
+    ref_count: ::glib_sys::Volatile(-1),
+    name: c_str!("org.gtk.GDBus.TestInterface"),
     methods: &METHODS as *const _ as *mut _,
     signals: 0 as *mut _,
     properties: 0 as *mut _,
     annotations: 0 as *mut _,
 };
 
-const INTERFACES: [*const ::gdbus_sys::GDBusInterfaceInfo; 2] = [&INTERFACE, 0 as *const _];
+const INTERFACES: [*const ::gio_sys::GDBusInterfaceInfo; 2] = [&INTERFACE, 0 as *const _];
 
-const NODE: ::gdbus_sys::GDBusNodeInfo = ::gdbus_sys::GDBusNodeInfo {
-    ref_count: -1,
-    path: 0 as *const _,
+const NODE: ::gio_sys::GDBusNodeInfo = ::gio_sys::GDBusNodeInfo {
+    ref_count: ::glib_sys::Volatile(-1),
+    path: 0 as *mut _,
     interfaces: &INTERFACES as *const _ as *mut _,
     nodes: 0 as *mut _,
     annotations: 0 as *mut _,

@@ -21,7 +21,7 @@
 
 //! `GDBusMethodInvocation` — Object for handling remote calls.
 
-use gdbus_sys::{GDBusMethodInvocation, g_dbus_method_invocation_return_value};
+use gio_sys::{GDBusMethodInvocation, g_dbus_method_invocation_return_value};
 
 use variant::ToVariant;
 

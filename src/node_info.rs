@@ -24,7 +24,7 @@
 use std::ffi::CString;
 use std::ptr::null_mut;
 
-use gdbus_sys::{GDBusInterfaceInfo, GDBusNodeInfo, g_dbus_node_info_new_for_xml, g_dbus_node_info_unref};
+use gio_sys::{GDBusInterfaceInfo, GDBusNodeInfo, g_dbus_node_info_new_for_xml, g_dbus_node_info_unref};
 use glib::Error;
 use glib::translate::from_glib_full;
 
