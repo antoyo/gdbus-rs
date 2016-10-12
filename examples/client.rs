@@ -33,6 +33,7 @@ interface TestClass {
     fn increment(number: i64) -> i64;
     fn is_true(boolean: bool) -> bool;
     fn log(message: &str);
+    fn log_default();
     fn multiple_results(number: i64) -> (i16, u16, i32, u32, u64);
 }
 );
@@ -50,6 +51,7 @@ fn main() {
     println!("increment(41): {}", test_object.increment(41).unwrap());
     println!("multiple_results(41): {:?}", test_object.multiple_results(41).unwrap());
     test_object.log("Test Log Message").ok();
+    test_object.log_default().ok();
 
     gtk::main();
 }

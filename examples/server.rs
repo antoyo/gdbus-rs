@@ -53,6 +53,10 @@ dbus_class!("org.gtk.GDBus.TestInterface", class TestClass {
         println!("LOG: {}", message);
     }
 
+    fn log_default() -> () {
+        println!("LOG: Default");
+    }
+
     fn multiple_results(number: i64) -> (i16, u16, i32, u32, u64) {
         (number as i16 - 2, number as u16 - 1, number as i32, number as u32 + 1, number as u64 + 2)
     }

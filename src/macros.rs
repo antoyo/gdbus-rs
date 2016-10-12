@@ -43,6 +43,35 @@ macro_rules! c_stringify {
 #[macro_export]
 macro_rules! dbus_prototypes {
     ($interface_name:expr,) => {};
+    ($interface_name:expr, fn $func_name:ident () -> ( $($return_type:ty),* ) ; $($rest:tt)* ) => {
+        pub fn $func_name(&self) -> Result<($($return_type),*), ::glib::error::Error> {
+            let method_call_message = ::gdbus::message::Message::new_method_call(&self.dbus_name, &self.object_path, $interface_name, stringify!($func_name));
+            self.connection.send_message_with_reply_sync(method_call_message, ::gdbus::connection::SEND_MESSAGE_FLAGS_NONE)
+                .map(|message| {
+                    let response: ($($return_type),*) = ::gdbus::variant::FromVariant::from_variant(&message.get_body());
+                    response
+                })
+        }
+        dbus_prototypes!($interface_name, $($rest)*);
+    };
+    ($interface_name:expr, fn $func_name:ident () -> $return_type:ty ; $($rest:tt)* ) => {
+        pub fn $func_name(&self) -> Result<$return_type, ::glib::error::Error> {
+            let method_call_message = ::gdbus::message::Message::new_method_call(&self.dbus_name, &self.object_path, $interface_name, stringify!($func_name));
+            self.connection.send_message_with_reply_sync(method_call_message, ::gdbus::connection::SEND_MESSAGE_FLAGS_NONE)
+                .map(|message| {
+                    let (response,): ($return_type,) = ::gdbus::variant::FromVariant::from_variant(&message.get_body());
+                    response
+                })
+        }
+        dbus_prototypes!($interface_name, $($rest)*);
+    };
+    ($interface_name:expr, fn $func_name:ident () ; $($rest:tt)* ) => {
+        pub fn $func_name(&self) -> Result<(), ::glib::error::Error> {
+            let method_call_message = ::gdbus::message::Message::new_method_call(&self.dbus_name, &self.object_path, $interface_name, stringify!($func_name));
+            self.connection.send_message(method_call_message, ::gdbus::connection::SEND_MESSAGE_FLAGS_NONE)
+        }
+        dbus_prototypes!($interface_name, $($rest)*);
+    };
     ($interface_name:expr, fn $func_name:ident ($($arg:ident : $($arg_type:tt)*),*) -> ( $($return_type:ty),* ) ; $($rest:tt)* ) => {
         pub fn $func_name(&self, $($arg : $($arg_type)*),*) -> Result<($($return_type),*), ::glib::error::Error> {
             let method_call_message = ::gdbus::message::Message::new_method_call(&self.dbus_name, &self.object_path, $interface_name, stringify!($func_name));
@@ -108,6 +137,26 @@ macro_rules! dbus_interface {
 #[macro_export]
 macro_rules! dbus_functions {
     ($method_name:expr, $args:expr, $invocation:expr,) => {
+    };
+    ($method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident () -> () $block:block $($rest:tt)*) => {
+        if $method_name == stringify!($func_name) {
+            let _result = $block;
+        }
+        dbus_functions!($method_name, $args, $invocation, $($rest)*);
+    };
+    ($method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident () -> ($($return_type:ty),*) $block:block $($rest:tt)*) => {
+        if $method_name == stringify!($func_name) {
+            let result: ($($return_type),*) = $block;
+            $invocation.return_value(result);
+        }
+        dbus_functions!($method_name, $args, $invocation, $($rest)*);
+    };
+    ($method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident () -> $return_type:ty $block:block $($rest:tt)*) => {
+        if $method_name == stringify!($func_name) {
+            let result: $return_type = $block;
+            $invocation.return_value((result,));
+        }
+        dbus_functions!($method_name, $args, $invocation, $($rest)*);
     };
     ($method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident ($($arg:ident : $arg_type:ty),*) -> () $block:block $($rest:tt)*) => {
         if $method_name == stringify!($func_name) {
