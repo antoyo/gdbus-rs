@@ -136,50 +136,51 @@ macro_rules! dbus_interface {
 
 #[macro_export]
 macro_rules! dbus_functions {
-    ($method_name:expr, $args:expr, $invocation:expr,) => {
+    ($_self:expr, $method_name:expr, $args:expr, $invocation:expr,) => {
     };
-    ($method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident () -> () $block:block $($rest:tt)*) => {
+    ($_self:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident ($(&$this:ident)*) -> () $block:block $($rest:tt)*) => {
         if $method_name == stringify!($func_name) {
             let _result = $block;
         }
-        dbus_functions!($method_name, $args, $invocation, $($rest)*);
+        dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
     };
-    ($method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident () -> ($($return_type:ty),*) $block:block $($rest:tt)*) => {
+    ($_self:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident ($(&$this:ident)*) -> ($($return_type:ty),*) $block:block $($rest:tt)*) => {
         if $method_name == stringify!($func_name) {
             let result: ($($return_type),*) = $block;
             $invocation.return_value(result);
         }
-        dbus_functions!($method_name, $args, $invocation, $($rest)*);
+        dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
     };
-    ($method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident () -> $return_type:ty $block:block $($rest:tt)*) => {
+    ($_self:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident ($(&$this:ident)*) -> $return_type:ty $block:block $($rest:tt)*) => {
         if $method_name == stringify!($func_name) {
+            $(let $this = $_self;)*
             let result: $return_type = $block;
             $invocation.return_value((result,));
         }
-        dbus_functions!($method_name, $args, $invocation, $($rest)*);
+        dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
     };
-    ($method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident ($($arg:ident : $arg_type:ty),*) -> () $block:block $($rest:tt)*) => {
+    ($_self:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident ($(&this,)* $($arg:ident : $arg_type:ty),*) -> () $block:block $($rest:tt)*) => {
         if $method_name == stringify!($func_name) {
             let ($($arg,)*): ($($arg_type,)*) = FromVariant::from_variant(&$args);
             let _result = $block;
         }
-        dbus_functions!($method_name, $args, $invocation, $($rest)*);
+        dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
     };
-    ($method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident ($($arg:ident : $arg_type:ty),*) -> ($($return_type:ty),*) $block:block $($rest:tt)*) => {
+    ($_self:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident ($(&this,)* $($arg:ident : $arg_type:ty),*) -> ($($return_type:ty),*) $block:block $($rest:tt)*) => {
         if $method_name == stringify!($func_name) {
             let ($($arg,)*): ($($arg_type,)*) = FromVariant::from_variant(&$args);
             let result: ($($return_type),*) = $block;
             $invocation.return_value(result);
         }
-        dbus_functions!($method_name, $args, $invocation, $($rest)*);
+        dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
     };
-    ($method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident ($($arg:ident : $arg_type:ty),*) -> $return_type:ty $block:block $($rest:tt)*) => {
+    ($_self:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident ($(&this,)* $($arg:ident : $arg_type:ty),*) -> $return_type:ty $block:block $($rest:tt)*) => {
         if $method_name == stringify!($func_name) {
             let ($($arg,)*): ($($arg_type,)*) = FromVariant::from_variant(&$args);
             let result: $return_type = $block;
             $invocation.return_value((result,));
         }
-        dbus_functions!($method_name, $args, $invocation, $($rest)*);
+        dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
     };
 }
 
@@ -200,6 +201,100 @@ macro_rules! dbus_arg_signature {
 #[macro_export]
 macro_rules! dbus_methods {
     () => {
+    };
+    (fn $func_name:ident (&this $(,$arg:ident : $arg_type:tt)*) -> ($($return_type:tt),*) $block:block $($rest:tt)*) => {
+        const $func_name: *mut ::gio_sys::GDBusMethodInfo = {
+            $(
+            const $arg: ::gio_sys::GDBusArgInfo = ::gio_sys::GDBusArgInfo {
+                ref_count: ::glib_sys::Volatile(-1),
+                name: c_stringify!($arg),
+                signature: c_str!(dbus_arg_signature!($arg_type)),
+                annotations: 0 as *mut _,
+            };
+            )*
+
+            const IN_ARGS: [*mut ::gio_sys::GDBusArgInfo; dbus_count_idents!($($arg),*) + 1] = [$(&$arg as *const _ as *mut _,)* 0 as *mut _];
+
+            const OUT_ARGS: [*mut ::gio_sys::GDBusArgInfo; dbus_count_idents!($($return_type),*) + 1] = [
+                $(
+                &::gio_sys::GDBusArgInfo {
+                    ref_count: ::glib_sys::Volatile(-1),
+                    name: c_str!("result", stringify!($return_type)),
+                    signature: c_str!(dbus_arg_signature!($return_type)),
+                    annotations: 0 as *mut _,
+                } as *const _ as *mut _,
+                )*
+            0 as *mut _];
+
+            &::gio_sys::GDBusMethodInfo {
+                ref_count: ::glib_sys::Volatile(-1),
+                name: c_stringify!($func_name),
+                in_args: &IN_ARGS as *const _ as *mut _,
+                out_args: &OUT_ARGS as *const _ as *mut _,
+                annotations: 0 as *mut _,
+            } as *const _ as *mut _
+        };
+
+        dbus_methods!($($rest)*);
+    };
+    (fn $func_name:ident (&this $(,$arg:ident : $arg_type:tt)*) -> $return_type:tt $block:block $($rest:tt)*) => {
+        const $func_name: *mut ::gio_sys::GDBusMethodInfo = {
+            $(
+            const $arg: ::gio_sys::GDBusArgInfo = ::gio_sys::GDBusArgInfo {
+                ref_count: ::glib_sys::Volatile(-1),
+                name: c_stringify!($arg),
+                signature: c_str!(dbus_arg_signature!($arg_type)),
+                annotations: 0 as *mut _,
+            };
+            )*
+
+            const IN_ARGS: [*mut ::gio_sys::GDBusArgInfo; dbus_count_idents!($($arg),*) + 1] = [$(&$arg as *const _ as *mut _,)* 0 as *mut _];
+
+            const OUT_ARG: ::gio_sys::GDBusArgInfo = ::gio_sys::GDBusArgInfo {
+                ref_count: ::glib_sys::Volatile(-1),
+                name: c_str!("result"),
+                signature: c_str!(dbus_arg_signature!($return_type)),
+                annotations: 0 as *mut _,
+            };
+
+            const OUT_ARGS: [*mut ::gio_sys::GDBusArgInfo; 2] = [&OUT_ARG as *const _ as *mut _, 0 as *mut _];
+
+            &::gio_sys::GDBusMethodInfo {
+                ref_count: ::glib_sys::Volatile(-1),
+                name: c_stringify!($func_name),
+                in_args: &IN_ARGS as *const _ as *mut _,
+                out_args: &OUT_ARGS as *const _ as *mut _,
+                annotations: 0 as *mut _,
+            } as *const _ as *mut _
+        };
+
+        dbus_methods!($($rest)*);
+    };
+    (fn $func_name:ident (&this $(,$arg:ident : $arg_type:tt)*) $block:block $($rest:tt)*) => {
+        const $func_name: *mut ::gio_sys::GDBusMethodInfo = {
+            $(
+            const $arg: ::gio_sys::GDBusArgInfo = ::gio_sys::GDBusArgInfo {
+                ref_count: ::glib_sys::Volatile(-1),
+                name: c_stringify!($arg),
+                signature: c_str!(dbus_arg_signature!($arg_type)),
+                annotations: 0 as *mut _,
+            };
+            )*
+
+            const IN_ARGS: [*mut ::gio_sys::GDBusArgInfo; dbus_count_idents!($($arg),*) + 1] = [$(&$arg as *const _ as *mut _,)* 0 as *mut _];
+
+            const OUT_ARGS: [*mut ::gio_sys::GDBusArgInfo; 1] = [0 as *mut _];
+
+            &::gio_sys::GDBusMethodInfo {
+                ref_count: ::glib_sys::Volatile(-1),
+                name: c_stringify!($func_name),
+                in_args: &IN_ARGS as *const _ as *mut _,
+                out_args: &OUT_ARGS as *const _ as *mut _,
+                annotations: 0 as *mut _,
+            } as *const _ as *mut _
+        };
+
+        dbus_methods!($($rest)*);
     };
     (fn $func_name:ident ($($arg:ident : $arg_type:tt),*) -> ($($return_type:tt),*) $block:block $($rest:tt)*) => {
         const $func_name: *mut ::gio_sys::GDBusMethodInfo = {
@@ -343,8 +438,8 @@ macro_rules! dbus_class {
                 }
             }
 
-            fn handle_method_call(method_name: &str, args: Variant, invocation: &MethodInvocation) {
-                dbus_functions!(method_name, args, invocation, $($functions)*);
+            fn handle_method_call(&self, method_name: &str, _args: Variant, invocation: &MethodInvocation) {
+                dbus_functions!(self, method_name, _args, invocation, $($functions)*);
             }
 
             fn run(&mut self, bus_name: &str) {
@@ -385,30 +480,58 @@ macro_rules! dbus_class {
     ($interface_name:expr, class $class_name:ident ($($variables:ident : $variable_types:ty),*) { $($functions:tt)* }) => {
         #[derive(Clone)]
         pub struct $class_name {
+            dbus_name: String,
+            own_name: OwnName,
             $($variables : $variable_types,)*
         }
 
         impl $class_name {
-            pub fn new($($variables: $variable_types),*) -> Self {
+            pub fn new(dbus_name: &str, $($variables: $variable_types),*) -> Self {
                 $class_name {
+                    dbus_name: dbus_name.to_string(),
+                    own_name: OwnName::from_id(0),
                     $($variables : $variables,)*
                 }
             }
 
-            pub fn run(&self, bus_name: &str) {
-                let connection = dbus::Connection::get_private(dbus::BusType::Session).unwrap();
-                connection.register_name(bus_name, dbus::NameFlag::ReplaceExisting as u32).unwrap();
+            fn handle_method_call(&self, method_name: &str, _args: Variant, invocation: &MethodInvocation) {
+                dbus_functions!(self, method_name, _args, invocation, $($functions)*);
+            }
 
-                let factory = dbus::tree::Factory::new_fn::<()>();
-                let class = factory.tree().add(factory.object_path(format!("/{}", stringify!($class_name)), ()).introspectable().add({
-                    let interface = factory.interface($interface_name, ());
-                    dbus_functions!(self, factory, interface, $($functions)*);
-                    interface
-                }));
-                class.set_registered(&connection, true).unwrap();
+            fn run(&mut self, bus_name: &str) {
+                dbus_methods!($($functions)*);
+                const METHODS: [*mut ::gio_sys::GDBusMethodInfo; dbus_count_methods!($($functions)*) + 1usize] = dbus_function_names!($($functions)*);
 
-                for _ in class.run(&connection, connection.iter(1000)) {
-                }
+                const INTERFACE: ::gio_sys::GDBusInterfaceInfo = ::gio_sys::GDBusInterfaceInfo {
+                    ref_count: ::glib_sys::Volatile(-1),
+                    name: c_str!($interface_name),
+                    methods: &METHODS as *const _ as *mut _,
+                    signals: 0 as *mut _,
+                    properties: 0 as *mut _,
+                    annotations: 0 as *mut _,
+                };
+
+                const INTERFACES: [*mut ::gio_sys::GDBusInterfaceInfo; 2] = [&INTERFACE as *const _ as *mut _, 0 as *mut _];
+
+                const NODE: ::gio_sys::GDBusNodeInfo = ::gio_sys::GDBusNodeInfo {
+                    ref_count: ::glib_sys::Volatile(-1),
+                    path: 0 as *mut _,
+                    interfaces: &INTERFACES as *const _ as *mut _,
+                    nodes: 0 as *mut _,
+                    annotations: 0 as *mut _,
+                };
+
+                let bus_name = bus_name.to_string();
+                let this = self.clone();
+                let old = ::std::mem::replace(&mut self.own_name, OwnName::new(Type::Session, &self.dbus_name, NAME_OWNER_FLAGS_NONE)
+                    .connect_bus_acquired(move |connection| {
+                        let introspection_data = NodeInfo::new(&mut NODE);
+                        let this = this.clone();
+                        connection.register_object(&bus_name, introspection_data.interface(0), move |method_name, args, invocation| this.handle_method_call(method_name, args, invocation))
+                    })
+                    .build());
+                ::std::mem::forget(old);
+
             }
         }
     };

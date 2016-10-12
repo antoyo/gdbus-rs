@@ -19,28 +19,30 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-/*
- * TODO: fix to allow ommiting -> () in dbus_clas!() macro.
- * TODO: fix to allow &str type in server method argument.
- */
-
-//! High-level D-Bus Support.
-
-#![warn(missing_docs)]
+#![allow(non_upper_case_globals)]
 
 #[macro_use]
-extern crate bitflags;
+extern crate gdbus;
 extern crate gio_sys;
-extern crate glib;
 extern crate glib_sys;
-extern crate gobject_sys;
-extern crate libc;
+extern crate gtk;
 
-pub mod connection;
-pub mod message;
-pub mod macros;
-pub mod method_invocation;
-pub mod node_info;
-pub mod own_name;
-pub mod variant;
-pub mod watch;
+use gdbus::method_invocation::MethodInvocation;
+use gdbus::node_info::NodeInfo;
+use gdbus::own_name::{OwnName, Type, NAME_OWNER_FLAGS_NONE};
+use gdbus::variant::Variant;
+
+dbus_class!("org.gtk.GDBus.TestInterface", class TestClass (number: i64) {
+    fn get_number(&this) -> i64 {
+        this.number
+    }
+});
+
+fn main() {
+    gtk::init().unwrap();
+
+    let mut test_object = TestClass::new("org.gtk.GDBus.TestServer", 42);
+    test_object.run("/org/gtk/GDBus/TestObject");
+
+    gtk::main();
+}

@@ -42,6 +42,7 @@ bitflags! {
 }
 
 /// Owning Bus Names.
+#[derive(Clone)]
 pub struct OwnName {
     id:  u32,
 }
