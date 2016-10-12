@@ -21,7 +21,6 @@
 
 /*
  * TODO: fix to allow ommiting -> () in dbus_clas!() macro.
- * TODO: fix to allow &str type in server method argument.
  */
 
 //! High-level D-Bus Support.

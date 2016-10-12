@@ -37,7 +37,7 @@ dbus_class!("org.gtk.GDBus.TestInterface", class TestClass {
         (number - 1, number as u8 + 1)
     }
 
-    fn hello_world(greeting: String) -> String {
+    fn hello_world(greeting: &str) -> String {
         format!("You greeted me with '{}'. Thanks!", greeting)
     }
 
@@ -49,7 +49,7 @@ dbus_class!("org.gtk.GDBus.TestInterface", class TestClass {
         boolean
     }
 
-    fn log(message: String) -> () {
+    fn log(message: &str) -> () {
         println!("LOG: {}", message);
     }
 

@@ -138,6 +138,15 @@ pub trait FromFFI {
     unsafe fn from_ffi(input: Self::Input) -> Self;
 }
 
+impl<'a> FromFFI for &'a str {
+    type Input = *mut c_char;
+
+    unsafe fn from_ffi(input: Self::Input) -> Self {
+        let result = CStr::from_ptr(input);
+        result.to_str().unwrap()
+    }
+}
+
 impl FromFFI for String {
     type Input = *mut c_char;
 
@@ -151,6 +160,12 @@ impl FromFFI for String {
 pub trait FromFormat {
     /// Convert the type to its from format string.
     fn from_format() -> &'static str;
+}
+
+impl<'a> FromFormat for &'a str {
+    fn from_format() -> &'static str {
+        "&s"
+    }
 }
 
 impl FromFormat for String {
