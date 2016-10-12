@@ -491,7 +491,7 @@ macro_rules! dbus_class {
                 dbus_functions!(self, method_name, _args, invocation, $($functions)+);
             }
 
-            fn run(&mut self, bus_name: &str) {
+            pub fn run(&mut self, bus_name: &str) {
                 dbus_methods!($($functions)+);
                 const METHODS: [*mut ::gio_sys::GDBusMethodInfo; dbus_count_methods!($($functions)+) + 1usize] = dbus_function_names!($($functions)+);
 
@@ -549,7 +549,7 @@ macro_rules! dbus_class {
                 dbus_functions!(self, method_name, _args, invocation, $($functions)+);
             }
 
-            fn run(&mut self, bus_name: &str) {
+            pub fn run(&mut self, bus_name: &str) {
                 dbus_methods!($($functions)+);
                 const METHODS: [*mut ::gio_sys::GDBusMethodInfo; dbus_count_methods!($($functions)+) + 1usize] = dbus_function_names!($($functions)+);
 
