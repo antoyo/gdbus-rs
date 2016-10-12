@@ -44,7 +44,7 @@ macro_rules! c_stringify {
 macro_rules! dbus_prototypes {
     ($interface_name:expr,) => {};
     ($interface_name:expr, fn $func_name:ident ($($arg:ident : $($arg_type:tt)*),*) -> ( $($return_type:ty),* ) ; $($rest:tt)* ) => {
-        fn $func_name(&self, $($arg : $($arg_type)*),*) -> Result<($($return_type),*), ::glib::error::Error> {
+        pub fn $func_name(&self, $($arg : $($arg_type)*),*) -> Result<($($return_type),*), ::glib::error::Error> {
             let method_call_message = ::gdbus::message::Message::new_method_call(&self.dbus_name, &self.object_path, $interface_name, stringify!($func_name));
             method_call_message.set_body(($($arg,)*));
             self.connection.send_message_with_reply_sync(method_call_message, ::gdbus::connection::SEND_MESSAGE_FLAGS_NONE)
@@ -56,7 +56,7 @@ macro_rules! dbus_prototypes {
         dbus_prototypes!($interface_name, $($rest)*);
     };
     ($interface_name:expr, fn $func_name:ident ($($arg:ident : $($arg_type:tt)*),*) -> $return_type:ty ; $($rest:tt)* ) => {
-        fn $func_name(&self, $($arg : $($arg_type)*),*) -> Result<$return_type, ::glib::error::Error> {
+        pub fn $func_name(&self, $($arg : $($arg_type)*),*) -> Result<$return_type, ::glib::error::Error> {
             let method_call_message = ::gdbus::message::Message::new_method_call(&self.dbus_name, &self.object_path, $interface_name, stringify!($func_name));
             method_call_message.set_body(($($arg,)*));
             self.connection.send_message_with_reply_sync(method_call_message, ::gdbus::connection::SEND_MESSAGE_FLAGS_NONE)
@@ -68,7 +68,7 @@ macro_rules! dbus_prototypes {
         dbus_prototypes!($interface_name, $($rest)*);
     };
     ($interface_name:expr, fn $func_name:ident ($($arg:ident : $($arg_type:tt)*),*) ; $($rest:tt)* ) => {
-        fn $func_name(&self, $($arg : $($arg_type)*),*) -> Result<(), ::glib::error::Error> {
+        pub fn $func_name(&self, $($arg : $($arg_type)*),*) -> Result<(), ::glib::error::Error> {
             let method_call_message = ::gdbus::message::Message::new_method_call(&self.dbus_name, &self.object_path, $interface_name, stringify!($func_name));
             method_call_message.set_body(($($arg,)*));
             self.connection.send_message(method_call_message, ::gdbus::connection::SEND_MESSAGE_FLAGS_NONE)

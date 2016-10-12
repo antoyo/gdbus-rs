@@ -1,6 +1,6 @@
 [package]
 name = "gdbus"
-version = "0.1.0"
+version = "0.0.1"
 authors = ["Antoni Boucher <bouanto@zoho.com>"]
 
 [dependencies]
