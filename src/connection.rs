@@ -137,7 +137,7 @@ impl Connection {
     /// Note that `message` must be unlocked, unless `flags` contain the `G_DBUS_SEND_MESSAGE_FLAGS_PRESERVE_SERIAL` flag.
     pub fn send_message_with_reply_sync(&self, message: Message, flags: SendMessageFlags) -> Result<Message, Error> {
         let mut error = null_mut();
-        let message = unsafe { g_dbus_connection_send_message_with_reply_sync(self.0, message.to_glib(), GDBusSendMessageFlags::from_bits_truncate(flags.bits()), -1, null_mut(), null_mut(), &mut error) };
+        let message = unsafe { g_dbus_connection_send_message_with_reply_sync(self.0, message.to_glib(), GDBusSendMessageFlags::from_bits_truncate(flags.bits()), 10, null_mut(), null_mut(), &mut error) };
         message_to_result(message, error)
     }
 }
@@ -165,13 +165,11 @@ unsafe extern fn handle_method_call(_connection: *mut GDBusConnection, _sender: 
 
 unsafe extern fn handle_get_property(_connection: *mut GDBusConnection, _sender: *const c_char, _object_path: *const c_char, _interface_name: *const c_char, _property_name: *const c_char, _error: *mut *mut GError, _user_data: *mut c_void) -> *mut GVariant {
     // TODO
-    println!("Get property");
     null_mut()
 }
 
 unsafe extern fn handle_set_property(_connection: *mut GDBusConnection, _sender: *const c_char, _object_path: *const c_char, _interface_name: *const c_char, _property_name: *const c_char, _value: *mut GVariant, _error: *mut *mut GError, _user_data: *mut c_void) -> i32 {
     // TODO
-    println!("Set property");
     0
 }
 

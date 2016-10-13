@@ -147,10 +147,8 @@ unsafe extern "C" fn bus_acquired_handler(connection: *mut GDBusConnection, _nam
 
 unsafe extern "C" fn name_acquired_handler(_connection: *mut GDBusConnection, _name: *const c_char, _user_data: *mut c_void) {
     // TODO
-    println!("Name acquired");
 }
 
 unsafe extern "C" fn name_lost_handler(_connection: *mut GDBusConnection, _name: *const c_char, _user_data: *mut c_void) {
     // TODO
-    println!("Name lost");
 }
