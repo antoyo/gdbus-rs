@@ -303,6 +303,14 @@ pub trait ToArg {
     fn to_arg(&self) -> Self::Output;
 }
 
+impl ToArg for c_char {
+    type Output = c_char;
+
+    fn to_arg(&self) -> Self::Output {
+        *self
+    }
+}
+
 impl ToArg for CString {
     type Output = *const c_char;
 
@@ -320,6 +328,14 @@ pub trait ToFFI
 
     /// Convert the value to its ffi representation.
     fn to_ffi(&self) -> Self::Output;
+}
+
+impl ToFFI for char {
+    type Output = c_char;
+
+    fn to_ffi(&self) -> Self::Output {
+        *self as c_char
+    }
 }
 
 impl<'a> ToFFI for &'a str {
@@ -342,6 +358,12 @@ impl ToFFI for String {
 pub trait ToFormat {
     /// Convert the type to its format string.
     fn to_format() -> &'static str;
+}
+
+impl ToFormat for char {
+    fn to_format() -> &'static str {
+        "y"
+    }
 }
 
 impl<'a> ToFormat for &'a str {
