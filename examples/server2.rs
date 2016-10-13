@@ -39,6 +39,10 @@ dbus_class!("org.gtk.GDBus.TestInterface", class TestClass (number: i64) {
     fn increment(&mut self) -> () {
         self.number = self.get_number() + 1;
     }
+
+    fn increment_by(&mut self, x: i64) -> () {
+        self.number = self.get_number() + x;
+    }
 });
 
 fn main() {

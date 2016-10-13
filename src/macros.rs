@@ -208,7 +208,7 @@ macro_rules! dbus_functions {
             dbus_functions!($object, $method_name, $args, $invocation, $($rest)*);
         }
     };
-    ($object:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident (&self) -> ($($return_type:ty),*) $block:block $($rest:tt)*) => {
+    ($object:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident (& $(mut)* self) -> ($($return_type:ty),*) $block:block $($rest:tt)*) => {
         if $method_name == stringify!($func_name) {
             let this = &mut *$object.borrow_mut();
             let result = this.$func_name();
@@ -218,7 +218,7 @@ macro_rules! dbus_functions {
             dbus_functions!($object, $method_name, $args, $invocation, $($rest)*);
         }
     };
-    ($object:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident (&self) -> $return_type:ty $block:block $($rest:tt)*) => {
+    ($object:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident (& $(mut)* self) -> $return_type:ty $block:block $($rest:tt)*) => {
         if $method_name == stringify!($func_name) {
             let this = &mut *$object.borrow_mut();
             let result = this.$func_name();
@@ -228,17 +228,17 @@ macro_rules! dbus_functions {
             dbus_functions!($object, $method_name, $args, $invocation, $($rest)*);
         }
     };
-    ($object:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident (&self, $($arg:ident : $arg_type:ty),*) -> () $block:block $($rest:tt)*) => {
+    ($object:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident (& $(mut)* self, $($arg:ident : $arg_type:ty),*) -> () $block:block $($rest:tt)*) => {
         if $method_name == stringify!($func_name) {
             let this = &mut *$object.borrow_mut();
             let ($($arg,)*): ($($arg_type,)*) = ::gdbus::variant::FromVariant::from_variant(&$args);
-            this.$func_name();
+            this.$func_name($($arg,)*);
         }
         else {
             dbus_functions!($object, $method_name, $args, $invocation, $($rest)*);
         }
     };
-    ($object:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident (&self, $($arg:ident : $arg_type:ty),*) -> ($($return_type:ty),*) $block:block $($rest:tt)*) => {
+    ($object:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident (& $(mut)* self, $($arg:ident : $arg_type:ty),*) -> ($($return_type:ty),*) $block:block $($rest:tt)*) => {
         if $method_name == stringify!($func_name) {
             let this = &mut *$object.borrow_mut();
             let ($($arg,)*): ($($arg_type,)*) = ::gdbus::variant::FromVariant::from_variant(&$args);
@@ -249,7 +249,7 @@ macro_rules! dbus_functions {
             dbus_functions!($object, $method_name, $args, $invocation, $($rest)*);
         }
     };
-    ($object:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident (&self, $($arg:ident : $arg_type:ty),*) -> $return_type:ty $block:block $($rest:tt)*) => {
+    ($object:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident (& $(mut)* self, $($arg:ident : $arg_type:ty),*) -> $return_type:ty $block:block $($rest:tt)*) => {
         if $method_name == stringify!($func_name) {
             let this = &mut *$object.borrow_mut();
             let ($($arg,)*): ($($arg_type,)*) = ::gdbus::variant::FromVariant::from_variant(&$args);

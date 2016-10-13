@@ -31,6 +31,7 @@ interface TestClass {
     fn get_number(&self) -> i64;
     fn get_number_plus_x(&self, x: i64) -> i64;
     fn increment(&mut self);
+    fn increment_by(&mut self, x: i64);
 }
 );
 
@@ -41,6 +42,8 @@ fn main() {
     println!("get_number(): {}", test_object.get_number().unwrap());
     println!("get_number_plus_x(10): {}", test_object.get_number_plus_x(10).unwrap());
     test_object.increment().ok();
+    println!("get_number(): {}", test_object.get_number().unwrap());
+    test_object.increment_by(-1).ok();
     println!("get_number(): {}", test_object.get_number().unwrap());
 
     gtk::main();
