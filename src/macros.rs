@@ -143,7 +143,9 @@ macro_rules! dbus_functions {
             let $this = $_self;
             let _result = $block;
         }
-        dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
+        else {
+            dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
+        }
     };
     ($_self:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident (&$this:ident) -> ($($return_type:ty),*) $block:block $($rest:tt)*) => {
         if $method_name == stringify!($func_name) {
@@ -151,7 +153,9 @@ macro_rules! dbus_functions {
             let result: ($($return_type),*) = $block;
             $invocation.return_value(result);
         }
-        dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
+        else {
+            dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
+        }
     };
     ($_self:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident (&$this:ident) -> $return_type:ty $block:block $($rest:tt)*) => {
         if $method_name == stringify!($func_name) {
@@ -159,7 +163,9 @@ macro_rules! dbus_functions {
             let result: $return_type = $block;
             $invocation.return_value((result,));
         }
-        dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
+        else {
+            dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
+        }
     };
     ($_self:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident (&$this:ident, $($arg:ident : $arg_type:ty),*) -> () $block:block $($rest:tt)*) => {
         if $method_name == stringify!($func_name) {
@@ -167,7 +173,9 @@ macro_rules! dbus_functions {
             let ($($arg,)*): ($($arg_type,)*) = ::gdbus::variant::FromVariant::from_variant(&$args);
             let _result = $block;
         }
-        dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
+        else {
+            dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
+        }
     };
     ($_self:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident (&$this:ident, $($arg:ident : $arg_type:ty),*) -> ($($return_type:ty),*) $block:block $($rest:tt)*) => {
         if $method_name == stringify!($func_name) {
@@ -176,7 +184,9 @@ macro_rules! dbus_functions {
             let result: ($($return_type),*) = $block;
             $invocation.return_value(result);
         }
-        dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
+        else {
+            dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
+        }
     };
     ($_self:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident (&$this:ident, $($arg:ident : $arg_type:ty),*) -> $return_type:ty $block:block $($rest:tt)*) => {
         if $method_name == stringify!($func_name) {
@@ -185,34 +195,44 @@ macro_rules! dbus_functions {
             let result: $return_type = $block;
             $invocation.return_value((result,));
         }
-        dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
+        else {
+            dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
+        }
     };
     ($_self:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident () -> () $block:block $($rest:tt)*) => {
         if $method_name == stringify!($func_name) {
             let _result = $block;
         }
-        dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
+        else {
+            dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
+        }
     };
     ($_self:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident () -> ($($return_type:ty),*) $block:block $($rest:tt)*) => {
         if $method_name == stringify!($func_name) {
             let result: ($($return_type),*) = $block;
             $invocation.return_value(result);
         }
-        dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
+        else {
+            dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
+        }
     };
     ($_self:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident () -> $return_type:ty $block:block $($rest:tt)*) => {
         if $method_name == stringify!($func_name) {
             let result: $return_type = $block;
             $invocation.return_value((result,));
         }
-        dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
+        else {
+            dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
+        }
     };
     ($_self:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident ($($arg:ident : $arg_type:ty),*) -> () $block:block $($rest:tt)*) => {
         if $method_name == stringify!($func_name) {
             let ($($arg,)*): ($($arg_type,)*) = ::gdbus::variant::FromVariant::from_variant(&$args);
             let _result = $block;
         }
-        dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
+        else {
+            dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
+        }
     };
     ($_self:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident ($($arg:ident : $arg_type:ty),*) -> ($($return_type:ty),*) $block:block $($rest:tt)*) => {
         if $method_name == stringify!($func_name) {
@@ -220,7 +240,9 @@ macro_rules! dbus_functions {
             let result: ($($return_type),*) = $block;
             $invocation.return_value(result);
         }
-        dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
+        else {
+            dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
+        }
     };
     ($_self:expr, $method_name:expr, $args:expr, $invocation:expr, fn $func_name:ident ($($arg:ident : $arg_type:ty),*) -> $return_type:ty $block:block $($rest:tt)*) => {
         if $method_name == stringify!($func_name) {
@@ -228,13 +250,16 @@ macro_rules! dbus_functions {
             let result: $return_type = $block;
             $invocation.return_value((result,));
         }
-        dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
+        else {
+            dbus_functions!($_self, $method_name, $args, $invocation, $($rest)*);
+        }
     };
 }
 
 #[macro_export]
 macro_rules! dbus_arg_signature {
     (bool) => { "b" };
+    (char) => { "y" };
     (u8) => { "y" };
     (i16) => { "n" };
     (u16) => { "q" };
@@ -545,7 +570,7 @@ macro_rules! dbus_class {
                 }
             }
 
-            fn handle_method_call(&self, method_name: &str, _args: ::gdbus::variant::Variant, invocation: &::gdbus::method_invocation::MethodInvocation) {
+            fn handle_method_call(&mut self, method_name: &str, _args: ::gdbus::variant::Variant, invocation: &::gdbus::method_invocation::MethodInvocation) {
                 dbus_functions!(self, method_name, _args, invocation, $($functions)+);
             }
 
@@ -578,7 +603,12 @@ macro_rules! dbus_class {
                     .connect_bus_acquired(move |connection| {
                         let introspection_data = ::gdbus::node_info::NodeInfo::new(&mut NODE);
                         let this = this.clone();
-                        connection.register_object(&bus_name, introspection_data.interface(0), move |method_name, args, invocation| this.handle_method_call(method_name, args, invocation))
+                        connection.register_object(&bus_name, introspection_data.interface(0), move |method_name, args, invocation| {
+                            let mut this = this.clone();
+                            let result = this.handle_method_call(method_name, args, invocation);
+                            ::std::mem::forget(this);
+                            result
+                        })
                     })
                     .build());
                 ::std::mem::forget(old);

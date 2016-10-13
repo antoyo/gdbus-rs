@@ -138,6 +138,14 @@ pub trait FromFFI {
     unsafe fn from_ffi(input: Self::Input) -> Self;
 }
 
+impl FromFFI for char {
+    type Input = c_char;
+
+    unsafe fn from_ffi(input: Self::Input) -> Self {
+        input as u8 as Self
+    }
+}
+
 impl<'a> FromFFI for &'a str {
     type Input = *mut c_char;
 
@@ -160,6 +168,12 @@ impl FromFFI for String {
 pub trait FromFormat {
     /// Convert the type to its from format string.
     fn from_format() -> &'static str;
+}
+
+impl FromFormat for char {
+    fn from_format() -> &'static str {
+        "y"
+    }
 }
 
 impl<'a> FromFormat for &'a str {
