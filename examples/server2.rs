@@ -28,12 +28,16 @@ extern crate glib_sys;
 extern crate gtk;
 
 dbus_class!("org.gtk.GDBus.TestInterface", class TestClass (number: i64) {
-    fn get_number(&this) -> i64 {
-        this.number
+    fn get_number(&self) -> i64 {
+        self.number
     }
 
-    fn get_number_plus_x(&this, x: i64) -> i64 {
-        this.number + x
+    fn get_number_plus_x(&self, x: i64) -> i64 {
+        self.number + x
+    }
+
+    fn increment(&mut self) -> () {
+        self.number = self.get_number() + 1;
     }
 });
 

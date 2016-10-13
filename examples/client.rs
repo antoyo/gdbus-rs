@@ -35,6 +35,7 @@ interface TestClass {
     fn log(message: &str);
     fn log_default();
     fn multiple_results(number: i64) -> (i16, u16, i32, u32, u64);
+    fn print_char(character: char);
 }
 );
 
@@ -52,6 +53,7 @@ fn main() {
     println!("multiple_results(41): {:?}", test_object.multiple_results(41).unwrap());
     test_object.log("Test Log Message").ok();
     test_object.log_default().ok();
+    test_object.print_char('E').ok();
 
     gtk::main();
 }
