@@ -137,7 +137,7 @@ impl Connection {
     /// Note that `message` must be unlocked, unless `flags` contain the `G_DBUS_SEND_MESSAGE_FLAGS_PRESERVE_SERIAL` flag.
     pub fn send_message_with_reply_sync(&self, message: Message, flags: SendMessageFlags) -> Result<Message, Error> {
         let mut error = null_mut();
-        let message = unsafe { g_dbus_connection_send_message_with_reply_sync(self.0, message.to_glib(), GDBusSendMessageFlags::from_bits_truncate(flags.bits()), 10, null_mut(), null_mut(), &mut error) };
+        let message = unsafe { g_dbus_connection_send_message_with_reply_sync(self.0, message.to_glib(), GDBusSendMessageFlags::from_bits_truncate(flags.bits()), 100, null_mut(), null_mut(), &mut error) };
         message_to_result(message, error)
     }
 }
